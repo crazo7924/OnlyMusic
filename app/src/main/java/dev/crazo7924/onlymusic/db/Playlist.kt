@@ -6,7 +6,7 @@ import java.net.URI
 import java.util.UUID
 
 /**
- * Represents a collections of [songs].
+ * Represents a collections of [Song]s.
  *
  * It has it's own [id] and a [name] to distinguish from others.
  *

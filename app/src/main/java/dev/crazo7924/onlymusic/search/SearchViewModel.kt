@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class SearchViewModel(
     private val searchRepository: SearchRepository,
-    val minQueryLength: Int = 3,
+    val minQueryLength: Int = 2,
 ) :
     ViewModel() {
 
@@ -25,9 +25,9 @@ class SearchViewModel(
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     fun updateQueryFrom(updatedValue: String) {
-        if (updatedValue.isBlank() || updatedValue.length < minQueryLength) {
-            _uiState.update { it.copy(suggestions = listOf()) }
-        }
+//        if (updatedValue.isBlank() || updatedValue.length < minQueryLength) {
+//            _uiState.update { it.copy(suggestions = listOf()) }
+//        }
         _uiState.update { it.copy(query = updatedValue) }
     }
 
@@ -46,15 +46,18 @@ class SearchViewModel(
                 _uiState.update {
                     it.copy(
                         searchState = SearchState.SUCCESS,
-                        suggestions = data
+                        suggestions = data,
+                        error = null
                     )
                 }
             }
             suggestionsResult.onFailure{
+                throwable ->
                 _uiState.update {
                     it.copy(
                         searchState = SearchState.ERROR,
-                        suggestions = listOf()
+                        suggestions = listOf(),
+                        error = throwable
                     )
                 }
             }

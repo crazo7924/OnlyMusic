@@ -2,15 +2,13 @@ package dev.crazo7924.onlymusic.search.data
 
 import android.util.Log
 import dev.crazo7924.onlymusic.DownloaderImpl
+import dev.crazo7924.onlymusic.MediaListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.schabi.newpipe.extractor.InfoItem.InfoType
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMusicSearchExtractor
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
-import java.io.IOException
 
 class NewPipeSearchRepository : SearchRepository {
 
@@ -18,8 +16,8 @@ class NewPipeSearchRepository : SearchRepository {
         NewPipe.init(DownloaderImpl)
     }
 
-    override suspend fun search(query: String): Result<List<SearchSuggestion>> {
-        return withContext(Dispatchers.IO) {
+    override suspend fun search(query: String): Result<List<MediaListItem>> =
+        withContext(Dispatchers.IO) {
             val linkHandler = YoutubeSearchQueryHandlerFactory.getInstance()
                 .fromQuery(query, MUSIC_CONTENT_FILTERS, "")
 
@@ -29,25 +27,39 @@ class NewPipeSearchRepository : SearchRepository {
             )
 
             Log.d(TAG, "search: About to call fetchPage()")
-            try {
+            val fetchPageResult = runCatching {
                 extractor.fetchPage()
-            } catch (ioException: IOException) {
-                Log.e(TAG, "search error: $ioException")
-                Result.failure<Exception>(ioException)
-            } catch (extractorException: ExtractionException) {
-                Log.e(TAG, "search error: $extractorException")
-                Result.failure<Exception>(extractorException)
             }
-            Log.d(TAG, "search: ${extractor.initialPage.items.size}")
-            Result.success(extractor.initialPage.items.map {
-                SearchSuggestion(
-                    it.name,
-                    it.infoType.toTypeString(),
-                    it.thumbnails.last().url
-                )
-            })
+
+            fetchPageResult.onFailure {
+                Log.e(TAG, "search fetch error: $it")
+                it.printStackTrace()
+                return@withContext Result.failure(it)
+            }
+
+            val result = runCatching {
+                val items = extractor.initialPage.items
+                Log.d(TAG, "count: ${items.size}")
+                return@runCatching items.map { item ->
+                    MediaListItem(
+                        title = item.name,
+                        infoType = item.infoType,
+                        thumbnailUri = item.thumbnails.firstOrNull()?.url,
+                        mediaUri = item.url
+                    )
+                }
+            }
+
+            result.onFailure {
+                Log.e(TAG, "search parse error: $it")
+                return@withContext Result.failure(it)
+            }
+
+            result.onSuccess {
+                return@withContext Result.success(it)
+            }
+
         }
-    }
 
 
     companion object {
@@ -59,14 +71,4 @@ class NewPipeSearchRepository : SearchRepository {
             YoutubeSearchQueryHandlerFactory.MUSIC_PLAYLISTS
         )
     }
-
-    private fun InfoType.toTypeString(): String {
-        return when (this) {
-            InfoType.STREAM -> "Song"
-            InfoType.PLAYLIST -> "Album"
-            InfoType.CHANNEL -> "Artist"
-            InfoType.COMMENT -> "Comment (wtf)"
-        }
-    }
-
 }

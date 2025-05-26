@@ -58,6 +58,7 @@ dependencies {
     // Material 3
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.media3.session)
 
     // Testing
     testImplementation(libs.junit)

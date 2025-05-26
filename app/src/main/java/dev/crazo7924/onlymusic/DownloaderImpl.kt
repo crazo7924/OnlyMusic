@@ -1,6 +1,5 @@
 package dev.crazo7924.onlymusic
 
-import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request.Builder
 import okhttp3.RequestBody
@@ -17,7 +16,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-
+// source: https://github.com/TeamNewPipe/NewPipe/blob/7cecda5713c3a9c493f7fbc0bc74f61483954a95/app/src/main/java/org/schabi/newpipe/DownloaderImpl.java
 object DownloaderImpl : Downloader() {
 
     private val mCookies: MutableMap<String?, String?> = HashMap()

@@ -24,10 +24,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "OnlyMusic"
 include(":app")
-includeBuild("../NewPipeExtractor") {
-    dependencySubstitution {
-        substitute(module("com.github.teamnewpipe:NewPipeExtractor")).using(
-            project(":extractor")
-        )
-    }
-}
+//includeBuild("../NewPipeExtractor") {
+//    dependencySubstitution {
+//        substitute(module("com.github.teamnewpipe:NewPipeExtractor")).using(
+//            project(":extractor")
+//        )
+//    }
+//}
