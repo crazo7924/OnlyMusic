@@ -42,10 +42,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dev.crazo7924.onlymusic.player.PlayerCmd
 import dev.crazo7924.onlymusic.player.PlayerService
-import dev.crazo7924.onlymusic.player.PlayerService.Companion.ACTION_ARG
-import dev.crazo7924.onlymusic.player.PlayerService.Companion.PLAYLIST_URI_ARG
-import dev.crazo7924.onlymusic.player.PlayerService.Companion.POSITION_ARG
-import dev.crazo7924.onlymusic.player.PlayerService.Companion.STREAM_URI_ARG
+import dev.crazo7924.onlymusic.player.PlayerService.Companion.ACTION
+import dev.crazo7924.onlymusic.player.PlayerService.Companion.ENQUEUE_URI
+import dev.crazo7924.onlymusic.player.PlayerService.Companion.PLAYLIST_URI
+import dev.crazo7924.onlymusic.player.PlayerService.Companion.POSITION
+import dev.crazo7924.onlymusic.player.PlayerService.Companion.STREAM_URI
 import dev.crazo7924.onlymusic.player.PlayerViewModel
 import dev.crazo7924.onlymusic.player.PlayerViewModelFactory
 import dev.crazo7924.onlymusic.player.ui.PlayerUI
@@ -247,7 +248,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 mediaListItems = searchUiState.value.suggestions,
                                 mediaListType = MediaListType.SUGGESTIONS,
-                                onItemClicked = { item, _ ->
+                                onItemClicked = { item ->
                                     Log.d(
                                         TAG, "Item clicked from search results: ${item.mediaUri}"
                                     )
@@ -255,21 +256,44 @@ class MainActivity : ComponentActivity() {
                                         InfoItem.InfoType.STREAM -> {
                                             val intent =
                                                 createPlayerServiceIntent(this@MainActivity)
-                                            intent.putExtra(STREAM_URI_ARG, item.mediaUri)
+                                            intent.putExtra(STREAM_URI, item.mediaUri)
                                             startService(intent)
                                         }
 
                                         InfoItem.InfoType.PLAYLIST -> {
                                             val intent =
                                                 createPlayerServiceIntent(this@MainActivity)
-                                            intent.putExtra(PLAYLIST_URI_ARG, item.mediaUri)
+                                            intent.putExtra(PLAYLIST_URI, item.mediaUri)
                                             startService(intent)
                                         }
 
                                         else -> {/* no-op */
                                         }
                                     }
-                                })
+                                },
+                                onEnqueue = { item ->
+                                    Log.d(TAG, "Enqueuing from search results: ${item.mediaUri}")
+                                    if (item.infoType == InfoItem.InfoType.STREAM) {
+                                        val intent = createPlayerServiceIntent(
+                                            this@MainActivity,
+                                            PlayerCmd.ENQUEUE
+                                        )
+                                        intent.putExtra(ENQUEUE_URI, item.mediaUri)
+                                        startService(intent)
+                                    }
+                                },
+                                onEnqueueNext = { item ->
+                                    Log.d(TAG, "Enqueuing from search results: ${item.mediaUri}")
+                                    if (item.infoType == InfoItem.InfoType.STREAM) {
+                                        val intent = createPlayerServiceIntent(
+                                            this@MainActivity,
+                                            PlayerCmd.ENQUEUE_NEXT
+                                        )
+                                        intent.putExtra(ENQUEUE_URI, item.mediaUri)
+                                        startService(intent)
+                                    }
+                                }
+                            )
 
                             SearchState.ERROR -> Box(
                                 contentAlignment = Alignment.Center,
@@ -298,7 +322,7 @@ class MainActivity : ComponentActivity() {
                                             playerCmd = PlayerCmd.SEEK_TO
                                         )
                                     intent.putExtra(
-                                        POSITION_ARG, position.toLong().toString()
+                                        POSITION, position.toLong().toString()
                                     )
                                     startService(intent)
                                 },
@@ -352,7 +376,7 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(
             context, PlayerService::class.java
         )
-        playerCmd?.let { intent.putExtra(ACTION_ARG, it.ordinal) }
+        playerCmd?.let { intent.putExtra(ACTION, it.ordinal) }
         return intent
     }
 }

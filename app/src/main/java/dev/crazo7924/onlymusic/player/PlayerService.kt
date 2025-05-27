@@ -20,10 +20,12 @@ class PlayerService : MediaSessionService() {
 
     companion object {
         const val TAG = "PlayerService"
-        const val STREAM_URI_ARG = "STREAM_URI"
-        const val PLAYLIST_URI_ARG = "PLAYLIST_URI"
-        const val ACTION_ARG = "ACTION"
-        const val POSITION_ARG = "POSITION"
+        const val STREAM_URI = "STREAM_URI"
+        const val PLAYLIST_URI = "PLAYLIST_URI"
+
+        const val ACTION = "ACTION"
+        const val ENQUEUE_URI = "ENQUEUE_URI"
+        const val POSITION = "POSITION"
     }
 
     /** Our [ExoPlayer] instance - late initialization in [onCreate] */
@@ -79,7 +81,7 @@ class PlayerService : MediaSessionService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         Log.d(TAG, "onStartCommand received")
-        intent?.getStringExtra(STREAM_URI_ARG)?.let {
+        intent?.getStringExtra(STREAM_URI)?.let {
             Log.d(TAG, "onStartCommand: received Stream uri $it")
             serviceScope.launch {
                 val result = musicRepository.loadMediaFromUri(it)
@@ -96,8 +98,9 @@ class PlayerService : MediaSessionService() {
             playPause()
         }
 
-        intent?.getStringExtra(PLAYLIST_URI_ARG)?.let {
+        intent?.getStringExtra(PLAYLIST_URI)?.let {
             Log.d(TAG, "onStartCommand: received Playlist uri $it")
+            exoPlayer.clearMediaItems()
             serviceScope.launch {
                 val results = musicRepository.loadPlaylistFromUri(it)
                 results.forEach { result ->
@@ -115,15 +118,15 @@ class PlayerService : MediaSessionService() {
             playPause()
         }
 
-        intent?.getIntExtra(ACTION_ARG, PlayerCmd.UNSET.ordinal)?.let {
+        intent?.getIntExtra(ACTION, PlayerCmd.UNSET.ordinal)?.let {
             val cmd = PlayerCmd.fromInt(it)
             when (cmd) {
                 PlayerCmd.PLAY_PAUSE -> playPause()
                 PlayerCmd.STOP -> stopPlayback()
                 PlayerCmd.SEEK_TO -> {
-                    val position = intent.getStringExtra(POSITION_ARG)
+                    val position = intent.getStringExtra(POSITION)
                     if (position == null) {
-                        Log.e(TAG, "onStartCommand: invalid position value")
+                        Log.e(TAG, "onStartCommand: missing position value")
                     } else seekToPosition(position.toLong())
                 }
 
@@ -133,6 +136,43 @@ class PlayerService : MediaSessionService() {
 
                 PlayerCmd.NEXT -> seekToNext()
                 PlayerCmd.PREV -> seekToPrevious()
+                PlayerCmd.ENQUEUE -> {
+                    val uriToEnqueue = intent.getStringExtra(ENQUEUE_URI)
+                    if (uriToEnqueue == null) {
+                        Log.e(TAG, "onStartCommand: missing uri to enqueue")
+                    } else {
+                        serviceScope.launch {
+                            val result = musicRepository.loadMediaFromUri(uriToEnqueue)
+                            result.onFailure { error ->
+                                Log.e(TAG, "onStartCommand: Error on single stream $error")
+                            }
+                            result.onSuccess {
+                                withContext(Dispatchers.Main) {
+                                    exoPlayer.addMediaItem(it)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                PlayerCmd.ENQUEUE_NEXT -> {
+                    val uriToEnqueue = intent.getStringExtra(ENQUEUE_URI)
+                    if (uriToEnqueue == null) {
+                        Log.e(TAG, "onStartCommand: missing uri to enqueue next")
+                    } else {
+                        serviceScope.launch {
+                            val result = musicRepository.loadMediaFromUri(uriToEnqueue)
+                            result.onFailure { error ->
+                                Log.e(TAG, "onStartCommand: Error on single stream $error")
+                            }
+                            result.onSuccess {
+                                withContext(Dispatchers.Main) {
+                                    exoPlayer.addMediaItem(1, it)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

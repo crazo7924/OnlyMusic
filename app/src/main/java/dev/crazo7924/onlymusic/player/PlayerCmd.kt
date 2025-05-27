@@ -6,6 +6,8 @@ enum class PlayerCmd {
     PREV,
     STOP,
     SEEK_TO,
+    ENQUEUE,
+    ENQUEUE_NEXT,
     UNSET;
 
     companion object {
