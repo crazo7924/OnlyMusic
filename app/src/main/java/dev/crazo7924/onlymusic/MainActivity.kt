@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -103,7 +104,8 @@ class MainActivity : ComponentActivity() {
             playerViewModel.setMediaItem(mediaControllerFuture.get().currentMediaItem)
             playerViewModel.restorePlayPauseToggle(mediaControllerFuture.get().isPlaying)
             // 2. assign a new job for position UI updates
-            positionUpdateJob = CoroutineScope(Dispatchers.Main).launch {
+            positionUpdateJob?.cancel()
+            positionUpdateJob = lifecycleScope.launch {
                 while (isActive) {
                     playerViewModel.updatePosition(mediaControllerFuture.get().currentPosition)
                     delay(UPDATE_DELAY)
@@ -153,8 +155,9 @@ class MainActivity : ComponentActivity() {
         MediaController.releaseFuture(mediaControllerFuture)
     }
 
-    override fun onRestart() {
-        super.onRestart()
+    override fun onStart() {
+        super.onStart()
+        if(mediaControllerFuture.isDone || mediaControllerFuture.isCancelled) return
         initializeMediaController(this@MainActivity)
     }
 
@@ -224,12 +227,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            SearchState.SEARCHING -> LazyColumn(
+                            SearchState.SEARCHING -> Column(
                                 modifier = Modifier.padding(
                                     innerPadding
                                 )
                             ) {
-                                items(count = 8) {
+                                repeat(times = 8) {
                                     ListItem(
                                         headlineContent = {
                                             Box(
@@ -369,7 +372,6 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        initializeMediaController(this@MainActivity)
     }
 
     fun createPlayerServiceIntent(context: Context, playerCmd: PlayerCmd? = null): Intent {
