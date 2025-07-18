@@ -40,7 +40,7 @@ class PlayerViewModel() : ViewModel() {
 
     fun setMediaItem(mediaItem: MediaItem?) {
         _uiState.update {
-            it.copy(media = mediaItem)
+            it.copy(media = mediaItem, queue = listOf())
         }
     }
 }

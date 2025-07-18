@@ -65,6 +65,7 @@ class NewPipeSearchRepository : SearchRepository {
     companion object {
         private const val TAG = "NewPipe Search"
         private val MUSIC_CONTENT_FILTERS = listOf(
+            YoutubeSearchQueryHandlerFactory.MUSIC_VIDEOS,
             YoutubeSearchQueryHandlerFactory.MUSIC_SONGS,
             YoutubeSearchQueryHandlerFactory.MUSIC_ARTISTS,
             YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS,

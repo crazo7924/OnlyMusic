@@ -2,6 +2,7 @@ package dev.crazo7924.onlymusic
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
@@ -24,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Timeline
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -32,14 +36,14 @@ import org.schabi.newpipe.extractor.InfoItem
 
 @Composable
 fun MediaList(
-    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
     mediaListItems: List<MediaListItem>,
     onItemClicked: (MediaListItem) -> Unit,
     onEnqueue: (MediaListItem) -> Unit,
     onEnqueueNext: (MediaListItem) -> Unit,
     mediaListType: MediaListType,
 ) {
-    LazyColumn(modifier = modifier) {
+    LazyColumn(contentPadding = contentPadding) {
         items(count = mediaListItems.size) { index ->
             var menuVisible by remember { mutableStateOf(false) }
             Box(contentAlignment = Alignment.TopStart) {
@@ -112,9 +116,72 @@ data class MediaListItem(
     val infoType: InfoItem.InfoType,
     val thumbnailUri: String?,
     val mediaUri: String? = null,
-)
+) {
+    companion object {
+        fun fromMediaItem(item: MediaItem): MediaListItem {
+            return MediaListItem(
+                title = item.mediaMetadata.title?.toString(),
+                artist = item.mediaMetadata.artist?.toString(),
+                infoType = InfoItem.InfoType.STREAM,
+                thumbnailUri = item.mediaMetadata.artworkUri?.toString(),
+                mediaUri = item.requestMetadata.mediaUri?.toString()
+            )
+        }
+    }
+}
+
+fun Timeline?.toMediaListItem(): List<MediaListItem> {
+    if (this == null) return listOf()
+    val mediaListItem = mutableListOf<MediaListItem>()
+    (0 until this.windowCount).forEach { i ->
+        mediaListItem.add(
+            MediaListItem.fromMediaItem(
+                this.getWindow(
+                    i,
+                    Timeline.Window()
+                ).mediaItem
+            )
+        )
+    }
+    return mediaListItem.toList()
+}
 
 enum class MediaListType {
     SUGGESTIONS,
     QUEUE
+}
+
+@Preview
+@Composable
+private fun MediaListPreview() {
+    MediaList(
+        PaddingValues(),
+        mediaListItems = listOf(
+            MediaListItem(
+                title = "Title",
+                artist = "Artist",
+                infoType = InfoItem.InfoType.STREAM,
+                thumbnailUri = null,
+                mediaUri = null
+            ),
+            MediaListItem(
+                title = "Title",
+                artist = "Artist",
+                infoType = InfoItem.InfoType.PLAYLIST,
+                thumbnailUri = null,
+                mediaUri = null
+            ),
+            MediaListItem(
+                title = "Title",
+                artist = "Artist",
+                infoType = InfoItem.InfoType.CHANNEL,
+                thumbnailUri = null,
+                mediaUri = null
+            )
+        ),
+        onItemClicked = {},
+        onEnqueue = {},
+        onEnqueueNext = {},
+        mediaListType = MediaListType.QUEUE,
+    )
 }

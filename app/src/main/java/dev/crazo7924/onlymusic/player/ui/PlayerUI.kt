@@ -46,7 +46,7 @@ import dev.crazo7924.onlymusic.player.PlayerUiState
 @Composable
 fun PlayerUI(
     modifier: Modifier = Modifier,
-    uiState: PlayerUiState,
+    playerUiState: PlayerUiState,
     onSeekTo: (Float) -> Unit,
     onPlayPause: () -> Unit,
     onPlayNext: () -> Unit,
@@ -54,12 +54,12 @@ fun PlayerUI(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = uiState.media?.mediaMetadata?.artist?.toString() ?: "Unknown Artist",
+            text = playerUiState.media?.mediaMetadata?.artist?.toString() ?: "Unknown Artist",
             modifier = Modifier.padding(horizontal = 16.dp),
             style = MaterialTheme.typography.titleLarge
         )
         Text(
-            text = uiState.media?.mediaMetadata?.title?.toString() ?: "Unknown Title",
+            text = playerUiState.media?.mediaMetadata?.title?.toString() ?: "Unknown Title",
             modifier = Modifier.padding(horizontal = 16.dp),
             style = MaterialTheme.typography.displayMedium,
         )
@@ -77,7 +77,7 @@ fun PlayerUI(
                 .padding(16.dp), contentAlignment = Alignment.Center
         ) {
             AsyncImage(
-                model = uiState.media?.mediaMetadata?.artworkUri, contentDescription = null,
+                model = playerUiState.media?.mediaMetadata?.artworkUri, contentDescription = null,
                 placeholder = icon, error = icon,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -96,7 +96,7 @@ fun PlayerUI(
                 verticalAlignment = Alignment.CenterVertically
 
             ) {
-                Text((uiState.position).toTimeString())
+                Text((playerUiState.position).toTimeString())
                 Row(
                     modifier = Modifier.align(Alignment.CenterVertically),
                     verticalAlignment = Alignment.CenterVertically
@@ -119,7 +119,7 @@ fun PlayerUI(
                         }
                     ) {
                         val icon =
-                            when (uiState.playbackState) {
+                            when (playerUiState.playbackState) {
                                 PlaybackState.INITIAL -> Icons.Rounded.PlayArrow
                                 PlaybackState.LOADING -> Icons.Rounded.Downloading
                                 PlaybackState.PLAYING -> Icons.Rounded.Pause
@@ -146,14 +146,14 @@ fun PlayerUI(
                     }
 
                 }
-                Text((uiState.media?.mediaMetadata?.durationMs ?: 0L).toTimeString())
+                Text((playerUiState.media?.mediaMetadata?.durationMs ?: 0L).toTimeString())
 
             }
 
             Slider(
                 modifier = Modifier.padding(16.dp),
-                valueRange = 0F..(uiState.media?.mediaMetadata?.durationMs?.toFloat() ?: 0F),
-                value = uiState.position.toFloat(),
+                valueRange = 0F..(playerUiState.media?.mediaMetadata?.durationMs?.toFloat() ?: 0F),
+                value = playerUiState.position.toFloat(),
                 onValueChange = {
                     onSeekTo(it)
                 },

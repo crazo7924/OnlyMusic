@@ -119,9 +119,7 @@ object DownloaderImpl : Downloader() {
             }
             var responseBodyToReturn: String? = null
             response.body.use { body ->
-                if (body != null) {
-                    responseBodyToReturn = body.string()
-                }
+                responseBodyToReturn = body.string()
             }
             val latestUrl: String = response.request.url.toString()
             return Response(
