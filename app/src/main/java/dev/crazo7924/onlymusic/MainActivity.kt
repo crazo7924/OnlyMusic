@@ -11,7 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -163,7 +162,7 @@ class MainActivity : ComponentActivity() {
                 // TODO: implement this hacky UI in a better way
 
                 val pagerState = rememberPagerState(initialPage = 0) { 3 }
-                val scrollScope = rememberCoroutineScope()
+                val pagerCoroutineScope = rememberCoroutineScope()
                 VerticalPager(state = pagerState) { page ->
                     when (page) {
                         0 -> {
@@ -215,6 +214,11 @@ class MainActivity : ComponentActivity() {
                                         )
                                         intent.putExtra(ENQUEUE_URI, item.mediaUri)
                                         startService(intent)
+                                    }
+                                },
+                                onPlayerPreviewClicked = {
+                                    pagerCoroutineScope.launch {
+                                        pagerState.animateScrollToPage(1)
                                     }
                                 }
                             )
@@ -272,7 +276,7 @@ class MainActivity : ComponentActivity() {
                 val backPressedCallback = object : OnBackPressedCallback(enabled = true) {
                     override fun handleOnBackPressed() {
                         if (pagerState.currentPage == 0) finish()
-                        else scrollScope.launch {
+                        else pagerCoroutineScope.launch {
                             pagerState.animateScrollToPage(page = pagerState.currentPage - 1)
                         }
                     }
