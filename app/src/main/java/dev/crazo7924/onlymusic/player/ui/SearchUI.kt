@@ -1,13 +1,11 @@
 package dev.crazo7924.onlymusic.player.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItem
@@ -21,85 +19,53 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import dev.crazo7924.onlymusic.MediaList
 import dev.crazo7924.onlymusic.MediaListItem
-import dev.crazo7924.onlymusic.MediaListType
 import dev.crazo7924.onlymusic.R
-import dev.crazo7924.onlymusic.player.PlayerUiState
 import dev.crazo7924.onlymusic.search.SearchState
 import dev.crazo7924.onlymusic.search.SearchUiState
-import dev.crazo7924.onlymusic.search.SearchViewModel
-import dev.crazo7924.onlymusic.search.data.SearchRepository
 import dev.crazo7924.onlymusic.search.ui.TopSearchBar
 import dev.crazo7924.onlymusic.shimmerLoading
 
 @Composable
 fun SearchUI(
-    searchViewModel: SearchViewModel,
     searchUiState: SearchUiState,
-    playerUiState: PlayerUiState,
     onItemClicked: (MediaListItem) -> Unit,
     onEnqueue: (MediaListItem) -> Unit,
+    onEnqueueRadio: (MediaListItem) -> Unit,
     onEnqueueNext: (MediaListItem) -> Unit,
-    onPlayerPreviewClicked: () -> Unit,
-    ) {
+    onSearch: () -> Unit,
+    onSearchQueryUpdated: (String) -> Unit,
+) {
     Scaffold(topBar = {
         TopSearchBar(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(all = 8.dp),
             query = searchUiState.query,
-            onQueryChange = { searchViewModel.updateQueryFrom(it) },
-            onSearch = { searchViewModel.search() },
+            onQueryChange = onSearchQueryUpdated,
+            onSearch = onSearch,
             placeholder = stringResource(R.string.app_name),
             iconDescription = stringResource(R.string.search_bar_indicator_icon_description),
         )
-    }, bottomBar = {
-        Column(modifier = Modifier.Companion
-            .padding(8.dp)
-            .clickable(
-                onClick = {
-                    onPlayerPreviewClicked()
-                }
-            )) {
-            ListItem(headlineContent = {
-                if (playerUiState.media == null) Text("Nothing is playing")
-                else Text(
-                    text = playerUiState.media.mediaMetadata.title?.toString()
-                        ?: "Unknown Title"
-                )
-            }, supportingContent = {
-                if (playerUiState.media != null) Text(
-                    text = playerUiState.media.mediaMetadata.artist?.toString()
-                        ?: "Unknown Artist"
-                ) else null
-            }, leadingContent = {
-                AsyncImage(
-                    modifier = Modifier.Companion.size(48.dp),
-                    model = playerUiState.media?.mediaMetadata?.artworkUri,
-                    contentDescription = null
-                )
-            })
-        }
     }) { innerPadding ->
 
         when (searchUiState.searchState) {
             SearchState.INITIAL -> Box(
-                contentAlignment = Alignment.Companion.Center,
-                modifier = Modifier.Companion
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
                 Text(
                     text = stringResource(R.string.search_help_text),
-                    textAlign = TextAlign.Companion.Center
+                    textAlign = TextAlign.Center
                 )
             }
 
             SearchState.SEARCHING -> Column(
-                modifier = Modifier.Companion.padding(
+                modifier = Modifier.padding(
                     innerPadding
                 )
             ) {
@@ -107,7 +73,7 @@ fun SearchUI(
                     ListItem(
                         headlineContent = {
                             Box(
-                                modifier = Modifier.Companion
+                                modifier = Modifier
                                     .fillMaxWidth()
                                     .height(72.dp)
                                     .clip(RoundedCornerShape(16.dp))
@@ -119,31 +85,41 @@ fun SearchUI(
 
 
             SearchState.SUCCESS -> MediaList(
-                contentPadding = innerPadding,
-                mediaListItems = searchUiState.suggestions,
-                mediaListType = MediaListType.SUGGESTIONS,
-                onItemClicked = {
-                    onItemClicked(it)
+                modifier = Modifier.padding(innerPadding),
+                mediaItems = searchUiState.suggestions,
+                onItemClicked = { item: MediaListItem, i: Int ->
+                    onItemClicked(item)
                 },
                 onEnqueue = {
                     onEnqueue(it)
                 },
                 onEnqueueNext = {
                     onEnqueueNext(it)
+                },
+                onEnqueueRadio = {
+                    onEnqueueRadio(it)
                 }
             )
 
             SearchState.ERROR -> Box(
-                contentAlignment = Alignment.Companion.Center,
+                contentAlignment = Alignment.Center,
                 modifier = Modifier.Companion
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.something_went_wrong),
-                    textAlign = TextAlign.Companion.Center
+                    textAlign = TextAlign.Center
                 )
             }
+
+            SearchState.LOADING -> MediaList(
+                mediaItems = searchUiState.suggestions,
+                onItemClicked = { _, _ -> /* no-op */ },
+                onEnqueue = {/* no-op */ },
+                onEnqueueNext = {/* no-op */ },
+                onEnqueueRadio = {/* no-op */ }
+            )
         }
     }
 }
@@ -152,18 +128,12 @@ fun SearchUI(
 @Composable
 private fun SearchUIPreview() {
     SearchUI(
-        searchViewModel = SearchViewModel(
-            searchRepository = object : SearchRepository {
-                override suspend fun search(query: String): Result<List<MediaListItem>> {
-                    return Result.success(listOf())
-                }
-            },
-            minQueryLength = 2
-        ),
         searchUiState = SearchUiState(),
-        playerUiState = PlayerUiState(),
         onItemClicked = {},
         onEnqueue = {},
-        onEnqueueNext = {}
-    ) { }
+        onEnqueueNext = {},
+        onSearch = {},
+        onSearchQueryUpdated = {},
+        onEnqueueRadio = {}
+    )
 }

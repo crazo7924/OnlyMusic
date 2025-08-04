@@ -2,7 +2,7 @@ package dev.crazo7924.onlymusic.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.crazo7924.onlymusic.search.data.SearchRepository
+import dev.crazo7924.onlymusic.repository.MusicRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SearchViewModel(
-    private val searchRepository: SearchRepository,
+    private val musicRepository: MusicRepository,
     val minQueryLength: Int = 2,
 ) :
     ViewModel() {
@@ -40,26 +40,35 @@ class SearchViewModel(
             return
         }
         viewModelScope.launch {
-            val suggestionsResult = searchRepository.search(uiState.value.query)
-            suggestionsResult.onSuccess {
-                data ->
-                _uiState.update {
-                    it.copy(
-                        searchState = SearchState.SUCCESS,
-                        suggestions = data,
-                        error = null
-                    )
+            val suggestionsResult = musicRepository.search(uiState.value.query)
+
+            // first reset the suggestions list
+            _uiState.update {
+                it.copy(
+                    suggestions = listOf(),
+                    searchState = SearchState.INITIAL
+                )
+            }
+            suggestionsResult.forEach { resultItem ->
+                resultItem.onSuccess { media ->
+                    _uiState.update {
+                        it.copy(
+                            searchState = SearchState.LOADING,
+                            suggestions = it.suggestions + media,
+                        )
+                    }
                 }
             }
-            suggestionsResult.onFailure{
-                throwable ->
+
+            if (suggestionsResult.isEmpty()) {
                 _uiState.update {
-                    it.copy(
-                        searchState = SearchState.ERROR,
-                        suggestions = listOf(),
-                        error = throwable
-                    )
+                    it.copy(searchState = SearchState.ERROR)
                 }
+                return@launch
+            }
+
+            _uiState.update {
+                it.copy(searchState = SearchState.SUCCESS)
             }
         }
     }

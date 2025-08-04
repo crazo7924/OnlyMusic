@@ -1,7 +1,10 @@
 package dev.crazo7924.onlymusic
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class MainActivityTest {
 
     @Test
@@ -96,7 +99,7 @@ class MainActivityTest {
 
     @Test
     fun `onCreate initial state`() {
-        // Verify the initial UI state (SearchState.INITIAL) and that initializeMediaController is called.
+        // Verify the initial UI state (SearchState.INITIAL) and that initializeMediaController is called (implicitly by onStart).
         // TODO implement test
     }
 

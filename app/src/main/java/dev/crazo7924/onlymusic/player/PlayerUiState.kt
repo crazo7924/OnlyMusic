@@ -1,15 +1,15 @@
 package dev.crazo7924.onlymusic.player
 
 import androidx.media3.common.MediaItem
-import dev.crazo7924.onlymusic.MediaListItem
 
 data class PlayerUiState(
     val playbackState: PlaybackState = PlaybackState.INITIAL,
-    val media: MediaItem? = null,
+    val currentMediaItemIndex: Int = 0,
     val position: Long = 0L,
-    val duration: Long = media?.mediaMetadata?.durationMs ?: 0L,
     val error: String? = null,
-    val queue: List<MediaListItem> = listOf()
+    val queue: List<MediaItem> = listOf(),
+    val media: MediaItem? = null,
+    val duration: Long? = 0L,
 )
 
 enum class PlaybackState {

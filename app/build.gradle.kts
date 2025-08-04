@@ -31,8 +31,9 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     buildFeatures {
@@ -42,13 +43,26 @@ android {
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
 }
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.fromTarget(JavaVersion.VERSION_11.toString())
+        jvmTarget = JvmTarget.fromTarget(JavaVersion.VERSION_1_8.toString())
     }
 }
 dependencies {
+
+    implementation(libs.androidx.navigation.compose.android)
+    implementation(libs.core.ktx)
+    implementation(libs.androidx.junit.ktx)
+    //    coreLibraryDesugaring(libs.desugar.jdk.libs.core)
+    coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
     // Core and Compose
     implementation(libs.androidx.core.ktx)
@@ -66,6 +80,9 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

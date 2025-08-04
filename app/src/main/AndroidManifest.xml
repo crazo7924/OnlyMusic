@@ -36,6 +36,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Workaround for https://github.com/robolectric/robolectric/pull/4736 -->
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:exported="true" />
     </application>
 
 </manifest>

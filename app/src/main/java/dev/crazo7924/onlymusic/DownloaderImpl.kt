@@ -8,6 +8,7 @@ import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.io.IOException
 import java.util.Arrays
 import java.util.Objects

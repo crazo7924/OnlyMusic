@@ -40,8 +40,7 @@ fun TopSearchBar(
                 singleLine = true,
                 suffix = {
                     Icon(
-                        imageVector = Icons.Outlined.Search,
-                        contentDescription = iconDescription
+                        imageVector = Icons.Outlined.Search, contentDescription = iconDescription
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -61,10 +60,9 @@ fun TopSearchBar(
             )
         },
         expanded = false,
-        onExpandedChange = {/* no-op */ },
-    ) {
-
-    }
+        onExpandedChange = { /* no-op */ },
+        content = { /* no-op */ },
+    )
 }
 
 
