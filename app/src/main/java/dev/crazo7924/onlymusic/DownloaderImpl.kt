@@ -8,7 +8,6 @@ import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
-import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.io.IOException
 import java.util.Arrays
 import java.util.Objects
@@ -139,5 +138,5 @@ private const val YOUTUBE_DOMAIN: String = "youtube.com"
 private const val YOUTUBE_RESTRICTED_MODE_COOKIE: String = "PREF=f2=8000000"
 private const val YOUTUBE_RESTRICTED_MODE_COOKIE_KEY: String = "youtube_restricted_mode_key"
 private const val USER_AGENT: String =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 private const val TAG = "DownloaderImpl"

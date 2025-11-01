@@ -82,4 +82,10 @@ class PlayerViewModel : ViewModel() {
             it.copy(playbackState = PlaybackState.INITIAL)
         }
     }
+
+    fun setError(errorMessage: String?) {
+        _uiState.update {
+            it.copy(playbackState = PlaybackState.ERROR, errorMessage = errorMessage)
+        }
+    }
 }

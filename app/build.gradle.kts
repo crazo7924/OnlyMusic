@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "dev.crazo7924.onlymusic"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "dev.crazo7924.onlymusic"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 3
         versionName = "0.1.1"
 
@@ -73,6 +73,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
 
+    implementation(libs.androidx.core.testing)
+
     // Material 3
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
@@ -80,6 +82,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     testImplementation(libs.mockito.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -107,5 +110,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
     implementation(libs.okhttp)
+
+    testImplementation(libs.androidx.media3.test.utils.roboelectric)
 
 }

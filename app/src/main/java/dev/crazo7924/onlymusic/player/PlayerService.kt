@@ -179,18 +179,30 @@ class PlayerService : MediaSessionService() {
         fun processStartRadio(mediaUri: String) {
             serviceScope.launch {
                 Log.d(TAG, "Radio URI received: $mediaUri")
-                exoPlayer.clearMediaItems()
                 val loadedMediaItems = musicRepository.loadAutoPlaylistUri(mediaUri)
-                loadedMediaItems.forEach { result ->
-                    result.onSuccess { mediaItem ->
-                        withContext(Dispatchers.Main) {
-                            exoPlayer.addMediaItem(mediaItem)
+                if (loadedMediaItems.isEmpty()) {
+                    Log.w(TAG, "No media items successfully loaded from radio URI $mediaUri")
+                    return@launch
+                }
+
+                loadedMediaItems.firstOrNull()?.onSuccess { firstItem ->
+                    withContext(Dispatchers.Main) {
+                        exoPlayer.setMediaItem(firstItem)
+                        exoPlayer.prepare()
+                        exoPlayer.play()
+                        Log.d(TAG, "Radio URI started.")
+                    }
+                }
+
+                if(loadedMediaItems.size > 1) {
+                    loadedMediaItems.drop(1).forEach { result ->
+                        result.onSuccess { mediaItem ->
+                            withContext(Dispatchers.Main) {
+                                exoPlayer.addMediaItem(mediaItem)
+                            }
                         }
                     }
                 }
-                exoPlayer.prepare()
-                exoPlayer.play()
-                Log.d(TAG, "Radio started")
             }
         }
 

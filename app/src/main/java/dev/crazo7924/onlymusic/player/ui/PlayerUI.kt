@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Downloading
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RestartAlt
@@ -67,7 +69,8 @@ fun PlayerUI(
         ) {
             Column {
                 Text(
-                    text = playerUiState.media?.mediaMetadata?.artist?.toString() ?: "Unknown Artist",
+                    text = playerUiState.media?.mediaMetadata?.artist?.toString()
+                        ?: "Unknown Artist",
                     modifier = Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2
@@ -81,8 +84,7 @@ fun PlayerUI(
                 val icon = forwardingPainter(
                     rememberVectorPainter(
                         Icons.Rounded.Album
-                    ),
-                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
+                    ), colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
                 )
 
                 Box(
@@ -109,14 +111,6 @@ fun PlayerUI(
                             .clip(CenteredSquareShape)
                     )
                 }
-
-                IconButton(onClick = onQueueIconClicked) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                        contentDescription = "Queue",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
             }
 
             OutlinedCard(
@@ -138,10 +132,12 @@ fun PlayerUI(
                         modifier = Modifier.align(Alignment.CenterVertically),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = {
-                            onPlayPrevious()
-                        }) {
+                        IconButton(
+                            modifier = Modifier.size(36.dp), onClick = {
+                                onPlayPrevious()
+                            }) {
                             Icon(
+                                modifier = Modifier.fillMaxSize(),
                                 imageVector = Icons.Rounded.SkipPrevious,
                                 contentDescription = "Previous",
                                 tint = MaterialTheme.colorScheme.secondary
@@ -149,18 +145,17 @@ fun PlayerUI(
                         }
 
                         IconButton(
-                            onClick = {
+                            modifier = Modifier.size(64.dp), onClick = {
                                 onPlayPause()
+                            }) {
+                            val icon = when (playerUiState.playbackState) {
+                                PlaybackState.INITIAL -> Icons.Rounded.PlayArrow
+                                PlaybackState.LOADING -> Icons.Rounded.Downloading
+                                PlaybackState.PLAYING -> Icons.Rounded.Pause
+                                PlaybackState.PAUSED -> Icons.Rounded.PlayArrow
+                                PlaybackState.STOPPED -> Icons.Rounded.RestartAlt
+                                PlaybackState.ERROR -> Icons.Rounded.Error
                             }
-                        ) {
-                            val icon =
-                                when (playerUiState.playbackState) {
-                                    PlaybackState.INITIAL -> Icons.Rounded.PlayArrow
-                                    PlaybackState.LOADING -> Icons.Rounded.Downloading
-                                    PlaybackState.PLAYING -> Icons.Rounded.Pause
-                                    PlaybackState.PAUSED -> Icons.Rounded.PlayArrow
-                                    PlaybackState.STOPPED -> Icons.Rounded.RestartAlt
-                                }
                             Icon(
                                 modifier = Modifier.fillMaxSize(),
                                 imageVector = icon,
@@ -169,10 +164,12 @@ fun PlayerUI(
                             )
                         }
 
-                        IconButton(onClick = {
-                            onPlayNext()
-                        }) {
+                        IconButton(
+                            modifier = Modifier.size(36.dp), onClick = {
+                                onPlayNext()
+                            }) {
                             Icon(
+                                modifier = Modifier.fillMaxSize(),
                                 imageVector = Icons.Rounded.SkipNext,
                                 contentDescription = "Previous",
                                 tint = MaterialTheme.colorScheme.secondary
@@ -192,6 +189,17 @@ fun PlayerUI(
                     onValueChange = { onSeekTo(it) },
                     onValueChangeFinished = onPerformSeek
                 )
+
+                IconButton(
+                    modifier = Modifier.align(Alignment.End),
+                    onClick = onQueueIconClicked,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                        contentDescription = "Queue",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }
@@ -254,7 +262,6 @@ private fun PlayerPreview() {
         onPlayNext = {},
         onPlayPrevious = {},
         onPerformSeek = {},
-        onQueueIconClicked = {}
-    )
+        onQueueIconClicked = {})
 }
 

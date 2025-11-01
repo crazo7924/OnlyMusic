@@ -1,32 +1,34 @@
 [versions]
-agp = "8.11.1"
-androidxJunit = "1.1.5"
+agp = "8.13.0"
 coilVersion = "3.3.0"
+coreTesting = "2.2.0"
 desugar_jdk_libs = "2.1.5"
-kotlin = "2.2.0"
-coreKtx = "1.16.0"
+kotlin = "2.2.21"
+coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
-espressoCore = "3.6.1"
+espressoCore = "3.7.0"
 kotlinxCoroutinesTest = "1.10.2"
-lifecycleRuntimeKtx = "2.9.2"
-activityCompose = "1.10.1"
-composeBom = "2025.07.00"
+lifecycleRuntimeKtx = "2.9.4"
+activityCompose = "1.11.0"
+composeBom = "2025.10.01"
 materialIconsExtended = "1.7.8"
 media3ExoplayerDash = "1.8.0"
-mockitoCore = "5.18.0"
+mockitoCore = "5.20.0"
+mockk = "1.14.6"
 newpipeExtractor = "0.24.8"
-okhttp = "5.1.0"
-robolectric = "4.15.1"
-roomRuntime = "2.7.2"
+okhttp = "5.3.0"
+robolectric = "4.16"
+roomRuntime = "2.8.3"
 ksp = "2.2.0-2.0.2"
 media3Session = "1.8.0"
-navigationComposeAndroid = "2.9.3"
+navigationComposeAndroid = "2.9.5"
 coreKtxVersion = "1.7.0"
 junitKtx = "1.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3ExoplayerDash" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3ExoplayerDash" }
@@ -52,9 +54,11 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 newpipe-extractor = { group = "com.github.teamnewpipe", name="NewPipeExtractor", version.ref = "newpipeExtractor" }
 okhttp = { group = "com.squareup.okhttp3", name="okhttp", version.ref = "okhttp" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }
+androidx-media3-test-utils-roboelectric = { group = "androidx.media3", name = "media3-test-utils-robolectric", version.ref = "media3Session" }
 androidx-navigation-compose-android = { group = "androidx.navigation", name = "navigation-compose-android", version.ref = "navigationComposeAndroid" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }

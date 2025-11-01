@@ -8,11 +8,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,12 +39,17 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
+import androidx.navigation.toRoute
 import coil3.compose.AsyncImage
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import dev.crazo7924.onlymusic.player.PlaybackState
 import dev.crazo7924.onlymusic.player.PlayerService
 import dev.crazo7924.onlymusic.player.PlayerViewModel
 import dev.crazo7924.onlymusic.player.PlayerViewModelFactory
@@ -75,7 +89,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private var positionUpdateJob: Job? = null
-    private var mediaControllerFuture: ListenableFuture<MediaController>? = null
+
+    @VisibleForTesting
+    var mediaControllerFuture: ListenableFuture<MediaController>? = null
+
     internal var mediaControllerBuilderFactory: (Context, SessionToken) -> MediaController.Builder =
         { context, sessionToken ->
             MediaController.Builder(context, sessionToken)
@@ -83,7 +100,7 @@ class MainActivity : ComponentActivity() {
 
 
     internal fun initializeMediaController(context: Context) {
-        val sessionToken = SessionToken(context, ComponentName(context, PlayerService::class.java))
+        val sessionToken = SessionToken(context, ComponentName(context.packageName, PlayerService::class.java.name))
         mediaControllerFuture = mediaControllerBuilderFactory(context, sessionToken).buildAsync()
 
         mediaControllerFuture?.addListener({
@@ -146,14 +163,13 @@ class MainActivity : ComponentActivity() {
                             playerViewModel.setCurrentMediaItemIndex(player.currentMediaItemIndex)
                         }
                     }
+                    if(events.contains(Player.EVENT_PLAYER_ERROR)) {
+                        Log.d(TAG, "Listener: onPlayerError")
+                        playerViewModel.setError(player.playerError?.message)
+                        player.stop()
+                    }
                     // Update duration frequently as it might change (e.g. live streams)
                     playerViewModel.updateDuration(player.duration.coerceAtLeast(0L))
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    super.onPlayerError(error)
-                    Log.e(TAG, "Player Error: ", error)
-                    // TODO: Update PlayerViewModel with error state
                 }
             })
         }, MoreExecutors.directExecutor())
@@ -189,7 +205,6 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -201,32 +216,69 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     bottomBar = {
-                        ListItem(
-                            modifier = Modifier
-                                .clickable(
-                                    onClick = {
-                                        navController.navigate(Destination.PLAYER)
-                                    }), headlineContent = {
-                                if (playerUiState.media == null) Text("Nothing is playing")
-                                else Text(
-                                    text = playerUiState.media?.mediaMetadata?.title?.toString()
-                                        ?: "Unknown Title"
-                                )
-                            }, supportingContent = {
-                                if (playerUiState.media == null) null
-                                else Text(
-                                    text = playerUiState.media?.mediaMetadata?.artist?.toString()
-                                        ?: "Unknown Artist"
-                                )
-                            }, leadingContent = {
-                                if (playerUiState.media == null) null
-                                else AsyncImage(
-                                    modifier = Modifier.size(48.dp),
-                                    model = playerUiState.media?.mediaMetadata?.artworkUri,
-                                    contentDescription = null
-                                )
-                            })
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        if(navBackStackEntry?.destination?.route != Destination.PLAYER) {
+                            ListItem(
+                                modifier = Modifier
+                                    .clickable(
+                                        onClick = {
+                                            navController.navigate(Destination.PLAYER, navOptions = navOptions { launchSingleTop = true })
+                                        }), headlineContent = {
+                                    if (playerUiState.media == null) Text("Nothing is playing")
+                                    else Text(
+                                        text = playerUiState.media?.mediaMetadata?.title?.toString()
+                                            ?: "Unknown Title"
+                                    )
+                                }, supportingContent = {
+                                    if (playerUiState.media != null) {
+                                        Text(
+                                            text = playerUiState.media?.mediaMetadata?.artist?.toString()
+                                                ?: "Unknown Artist"
+                                        )
+                                    }
+                                }, leadingContent = {
+                                    if (playerUiState.media != null) {
+                                        AsyncImage(
+                                            modifier = Modifier.size(48.dp),
+                                            model = playerUiState.media?.mediaMetadata?.artworkUri,
+                                            contentDescription = null
+                                        )
+                                    }
+                                }, trailingContent = {
+                                    if (playerUiState.media != null) {
+                                        Row {
+                                            IconButton(onClick = {
+                                                navController.navigate(Destination.QUEUE, navOptions = navOptions { launchSingleTop = true })
+                                            })
+                                            {
+                                                Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                                            }
 
+                                            IconButton(onClick = {
+                                                mediaControllerFuture?.get()?.prepare()
+                                                if (playerUiState.playbackState == PlaybackState.PLAYING)
+                                                    mediaControllerFuture?.get()?.pause()
+                                                else
+                                                    mediaControllerFuture?.get()?.play()
+                                                Log.d(
+                                                    TAG,
+                                                    "Playback toggled. Current state: ${playerUiState.playbackState}"
+                                                )
+                                            }) {
+                                                if (playerUiState.playbackState == PlaybackState.PLAYING)
+                                                    Icon(Icons.Filled.Pause, contentDescription = null)
+                                                else
+                                                    Icon(
+                                                        Icons.Filled.PlayArrow,
+                                                        contentDescription = null
+                                                    )
+
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     }
                 ) { innerPadding ->
                     NavHost(
@@ -309,7 +361,7 @@ class MainActivity : ComponentActivity() {
                                 onEnqueueRadio = { item ->
                                     Log.d(
                                         TAG,
-                                        "Enqueue Radio for item: ${item.mediaUri}"
+                                        "Enqueuing Radio for item: ${item.mediaUri}"
                                     )
 
                                     val bundle = Bundle().apply {
@@ -337,13 +389,13 @@ class MainActivity : ComponentActivity() {
                                 onSeekTo = { position -> positionForUpdate = position },
                                 onPlayPause = {
                                     mediaControllerFuture?.get()?.prepare()
-                                    if (mediaControllerFuture?.get()?.isPlaying == true)
+                                    if (playerUiState.playbackState == PlaybackState.PLAYING)
                                         mediaControllerFuture?.get()?.pause()
                                     else
                                         mediaControllerFuture?.get()?.play()
                                     Log.d(
                                         TAG,
-                                        "Playback toggled. Current state: ${mediaControllerFuture?.get()?.isPlaying}"
+                                        "Playback toggled. Current state: ${playerUiState.playbackState}"
                                     )
                                 },
                                 onPlayNext = {
@@ -355,7 +407,7 @@ class MainActivity : ComponentActivity() {
                                     Log.d(TAG, "SeekToPrevious triggered")
                                 },
                                 onQueueIconClicked = {
-                                    navController.navigate(Destination.QUEUE)
+                                    navController.navigate(Destination.QUEUE, navOptions = navOptions { launchSingleTop = true })
                                 },
                                 onPerformSeek = {
                                     Log.d(TAG, "Perform seek to percentage: $positionForUpdate")
