@@ -49,7 +49,7 @@ class PlayerService : MediaSessionService() {
         val COMMAND_SEEK_TO_PERCENTAGE =
             SessionCommand("dev.crazo7924.onlymusic.player.SEEK_TO_PERCENTAGE", Bundle.EMPTY)
 
-        val COMMAND_START_RADIO =
+        val COMMAND_ENQUEUE_RADIO =
             SessionCommand("dev.crazo7924.onlymusic.player.START_RADIO", Bundle.EMPTY)
 
         // Keys for Bundle arguments
@@ -136,9 +136,9 @@ class PlayerService : MediaSessionService() {
         fun processLoadStreamUri(uri: String, playWhenReady: Boolean) {
             serviceScope.launch {
                 val result = musicRepository.loadMediaUri(uri)
-                result.onSuccess { mediaItem ->
+                result.onSuccess { item ->
                     withContext(Dispatchers.Main) {
-                        exoPlayer.setMediaItem(mediaItem)
+                        exoPlayer.setMediaItem(item.toMediaItem())
                         exoPlayer.prepare()
                         if (playWhenReady) exoPlayer.play()
                         Log.d(TAG, "Stream URI loaded. Play when ready: $playWhenReady")
@@ -155,7 +155,7 @@ class PlayerService : MediaSessionService() {
                 val results = musicRepository.loadPlaylistUri(playlistUri)
                 val mediaItems = mutableListOf<MediaItem>()
                 results.forEach { result ->
-                    result.onSuccess { mediaItems.add(it) }
+                    result.onSuccess { mediaItems.add(it.toMediaItem()) }
                         .onFailure { error ->
                             Log.e(
                                 TAG,
@@ -176,30 +176,33 @@ class PlayerService : MediaSessionService() {
             }
         }
 
-        fun processStartRadio(mediaUri: String) {
+        fun processEnqueueRadio(mediaUri: String) {
             serviceScope.launch {
                 Log.d(TAG, "Radio URI received: $mediaUri")
-                exoPlayer.clearMediaItems()
                 val loadedMediaItems = musicRepository.loadAutoPlaylistUri(mediaUri)
+                if (loadedMediaItems.isEmpty()) {
+                    Log.w(TAG, "No media items successfully loaded from radio URI $mediaUri")
+                    return@launch
+                }
+
                 loadedMediaItems.forEach { result ->
-                    result.onSuccess { mediaItem ->
+                    result.onSuccess { item ->
                         withContext(Dispatchers.Main) {
-                            exoPlayer.addMediaItem(mediaItem)
+                            exoPlayer.addMediaItem(item.toMediaItem())
                         }
                     }
                 }
-                exoPlayer.prepare()
-                exoPlayer.play()
-                Log.d(TAG, "Radio started")
+
+                Log.d(TAG, "processEnqueueRadio: successfully loaded radio for URI: $mediaUri")
             }
         }
 
         fun processEnqueueUri(uri: String) {
             serviceScope.launch {
                 val result = musicRepository.loadMediaUri(uri)
-                result.onSuccess { mediaItem ->
+                result.onSuccess { item ->
                     withContext(Dispatchers.Main) {
-                        exoPlayer.addMediaItem(mediaItem)
+                        exoPlayer.addMediaItem(item.toMediaItem())
                         Log.d(TAG, "URI enqueued.")
                     }
                 }.onFailure { error ->
@@ -213,7 +216,7 @@ class PlayerService : MediaSessionService() {
                 val results = musicRepository.loadPlaylistUri(playlistUri)
                 val mediaItems = mutableListOf<MediaItem>()
                 results.forEach { result ->
-                    result.onSuccess { mediaItems.add(it) }
+                    result.onSuccess { mediaItems.add(it.toMediaItem()) }
                         .onFailure { error ->
                             Log.e(
                                 TAG,
@@ -236,7 +239,7 @@ class PlayerService : MediaSessionService() {
         }
 
         fun processSeekToPercentage(percentage: Float) {
-            if (percentage < 0f || percentage > 1f) {
+            if (percentage !in 0f..1f) {
                 Log.d(TAG, "processSeekToPercentage: incorrect percentage value: $percentage")
                 return
             }
@@ -261,9 +264,10 @@ class PlayerService : MediaSessionService() {
                 .add(COMMAND_LOAD_STREAM_URI)
                 .add(COMMAND_LOAD_PLAYLIST_URI)
                 .add(COMMAND_ENQUEUE_URI)
+                .add(COMMAND_ENQUEUE_NEXT_URI)
                 .add(COMMAND_ENQUEUE_PLAYLIST_URI)
                 .add(COMMAND_SEEK_TO_PERCENTAGE)
-                .add(COMMAND_START_RADIO)
+                .add(COMMAND_ENQUEUE_RADIO)
                 .build()
 
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -333,10 +337,10 @@ class PlayerService : MediaSessionService() {
                     }
                 }
 
-                COMMAND_START_RADIO -> {
+                COMMAND_ENQUEUE_RADIO -> {
                     val mediaUri = args.getString(KEY_URI)
                     if (mediaUri != null) {
-                        processStartRadio(mediaUri)
+                        processEnqueueRadio(mediaUri)
                         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                     }
                 }
@@ -349,7 +353,7 @@ class PlayerService : MediaSessionService() {
                 val result = musicRepository.loadMediaUri(uri)
                 result.onSuccess { mediaItem ->
                     withContext(Dispatchers.Main) {
-                        exoPlayer.addMediaItem(exoPlayer.currentMediaItemIndex + 1, mediaItem)
+                        exoPlayer.addMediaItem(exoPlayer.currentMediaItemIndex + 1, mediaItem.toMediaItem())
                         Log.d(TAG, "URI enqueued for next.")
                     }
                 }.onFailure { error ->

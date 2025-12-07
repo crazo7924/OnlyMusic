@@ -6,7 +6,7 @@ data class PlayerUiState(
     val playbackState: PlaybackState = PlaybackState.INITIAL,
     val currentMediaItemIndex: Int = 0,
     val position: Long = 0L,
-    val error: String? = null,
+    val errorMessage: String? = null,
     val queue: List<MediaItem> = listOf(),
     val media: MediaItem? = null,
     val duration: Long? = 0L,
@@ -17,5 +17,6 @@ enum class PlaybackState {
     LOADING,
     PLAYING,
     PAUSED,
-    STOPPED
+    STOPPED,
+    ERROR
 }

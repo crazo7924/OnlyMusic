@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.media3.common.MediaItem
 import dev.crazo7924.onlymusic.MediaList
 import dev.crazo7924.onlymusic.MediaListItem
 
@@ -26,7 +25,7 @@ fun QueueUI(items: List<MediaListItem>, onItemClicked: (Int) -> Unit) {
         MediaList(
             modifier = Modifier.padding(padding),
             mediaItems = items,
-            onItemClicked = { item, index ->
+            onItemClicked = { _, index ->
                 onItemClicked(index)
             },
             onEnqueue = {},
