@@ -1,4 +1,4 @@
-package dev.crazo7924.onlymusic.player.ui
+package dev.crazo7924.onlymusic.search.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +24,6 @@ import dev.crazo7924.onlymusic.MediaListItem
 import dev.crazo7924.onlymusic.R
 import dev.crazo7924.onlymusic.search.SearchState
 import dev.crazo7924.onlymusic.search.SearchUiState
-import dev.crazo7924.onlymusic.search.ui.TopSearchBar
 import dev.crazo7924.onlymusic.shimmerLoading
 
 @Composable
