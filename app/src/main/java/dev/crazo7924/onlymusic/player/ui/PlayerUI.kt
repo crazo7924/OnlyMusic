@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.Error
@@ -55,11 +56,11 @@ import dev.crazo7924.onlymusic.player.PlayerUiState
 fun PlayerUI(
     playerUiState: PlayerUiState,
     onSeekTo: (Float) -> Unit,
-    onPerformSeek: () -> Unit,
     onPlayPause: () -> Unit,
     onPlayNext: () -> Unit,
     onPlayPrevious: () -> Unit,
     onQueueIconClicked: () -> Unit,
+    onCollapse: () -> Unit,
 ) {
     Scaffold { paddingValues ->
         Box(
@@ -68,6 +69,13 @@ fun PlayerUI(
                 .padding(paddingValues)
         ) {
             Column {
+                IconButton(onClick = onCollapse) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Collapse the player",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
                     text = playerUiState.media?.mediaMetadata?.artist?.toString()
                         ?: "Unknown Artist",
@@ -186,8 +194,7 @@ fun PlayerUI(
                     valueRange = 0F..(playerUiState.media?.mediaMetadata?.durationMs?.toFloat()
                         ?: 1F),
                     value = playerUiState.position.toFloat(),
-                    onValueChange = { onSeekTo(it) },
-                    onValueChangeFinished = onPerformSeek
+                    onValueChange = { onSeekTo(it) }
                 )
 
                 IconButton(
@@ -261,7 +268,7 @@ private fun PlayerPreview() {
         onPlayPause = {},
         onPlayNext = {},
         onPlayPrevious = {},
-        onPerformSeek = {},
-        onQueueIconClicked = {})
+        onQueueIconClicked = {},
+        onCollapse = {})
 }
 
