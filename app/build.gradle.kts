@@ -61,6 +61,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose.android)
     implementation(libs.core.ktx)
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.material3)
     //    coreLibraryDesugaring(libs.desugar.jdk.libs.core)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 

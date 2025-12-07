@@ -14,7 +14,6 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        mavenCentral()
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -28,6 +27,7 @@ dependencyResolutionManagement {
                 includeGroupByRegex("com\\.github\\.(teamnewpipe|TeamNewPipe).*")
             }
         }
+        mavenCentral()
     }
 }
 
