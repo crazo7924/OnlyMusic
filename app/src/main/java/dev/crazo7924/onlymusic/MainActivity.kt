@@ -9,43 +9,39 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navOptions
-import androidx.navigation.toRoute
 import coil3.compose.AsyncImage
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -55,10 +51,10 @@ import dev.crazo7924.onlymusic.player.PlayerViewModel
 import dev.crazo7924.onlymusic.player.PlayerViewModelFactory
 import dev.crazo7924.onlymusic.player.ui.PlayerUI
 import dev.crazo7924.onlymusic.player.ui.QueueUI
-import dev.crazo7924.onlymusic.player.ui.SearchUI
 import dev.crazo7924.onlymusic.repository.NewPipeMusicRepository
 import dev.crazo7924.onlymusic.search.SearchViewModel
 import dev.crazo7924.onlymusic.search.SearchViewModelFactory
+import dev.crazo7924.onlymusic.search.ui.SearchUI
 import dev.crazo7924.onlymusic.theme.OnlyMusicTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -66,12 +62,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.InfoItem
 
-
-object Destination {
-    const val QUEUE = "queue"
-    const val SEARCH = "search"
-    const val PLAYER = "player"
-}
 
 class MainActivity : ComponentActivity() {
     private val searchViewModel: SearchViewModel by viewModels {
@@ -100,7 +90,9 @@ class MainActivity : ComponentActivity() {
 
 
     internal fun initializeMediaController(context: Context) {
-        val sessionToken = SessionToken(context, ComponentName(context.packageName, PlayerService::class.java.name))
+        val sessionToken = SessionToken(
+            context, ComponentName(context.packageName, PlayerService::class.java.name)
+        )
         mediaControllerFuture = mediaControllerBuilderFactory(context, sessionToken).buildAsync()
 
         mediaControllerFuture?.addListener({
@@ -163,7 +155,7 @@ class MainActivity : ComponentActivity() {
                             playerViewModel.setCurrentMediaItemIndex(player.currentMediaItemIndex)
                         }
                     }
-                    if(events.contains(Player.EVENT_PLAYER_ERROR)) {
+                    if (events.contains(Player.EVENT_PLAYER_ERROR)) {
                         Log.d(TAG, "Listener: onPlayerError")
                         playerViewModel.setError(player.playerError?.message)
                         player.stop()
@@ -205,6 +197,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -212,18 +205,34 @@ class MainActivity : ComponentActivity() {
             OnlyMusicTheme {
                 val playerUiState by playerViewModel.uiState.collectAsState()
                 val searchUiState by searchViewModel.uiState.collectAsState()
-                val navController = rememberNavController()
 
-                Scaffold(
-                    bottomBar = {
-                        val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        if(navBackStackEntry?.destination?.route != Destination.PLAYER) {
+                val scaffoldState = rememberBottomSheetScaffoldState(
+                    bottomSheetState = rememberStandardBottomSheetState(
+                        initialValue = SheetValue.PartiallyExpanded
+                    )
+                )
+
+                val isExpanded = scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded
+                val scope = rememberCoroutineScope()
+                val pagerState = rememberPagerState(pageCount = { 2 })
+
+                BottomSheetScaffold(
+                    sheetPeekHeight = 80.dp,
+                    scaffoldState = scaffoldState,
+                    sheetDragHandle = null,
+                    sheetContent = {
+                        AnimatedVisibility(
+                            visible = !isExpanded,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                            exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                        ) {
                             ListItem(
-                                modifier = Modifier
-                                    .clickable(
-                                        onClick = {
-                                            navController.navigate(Destination.PLAYER, navOptions = navOptions { launchSingleTop = true })
-                                        }), headlineContent = {
+                                modifier = Modifier.clickable(
+                                    onClick = {
+                                        scope.launch {
+                                            scaffoldState.bottomSheetState.expand()
+                                        }
+                                    }), headlineContent = {
                                     if (playerUiState.media == null) Text("Nothing is playing")
                                     else Text(
                                         text = playerUiState.media?.mediaMetadata?.title?.toString()
@@ -248,192 +257,198 @@ class MainActivity : ComponentActivity() {
                                     if (playerUiState.media != null) {
                                         Row {
                                             IconButton(onClick = {
-                                                navController.navigate(Destination.QUEUE, navOptions = navOptions { launchSingleTop = true })
-                                            })
-                                            {
-                                                Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                                                scope.launch {
+                                                    scaffoldState.bottomSheetState.expand()
+                                                    pagerState.animateScrollToPage(page = 1)
+                                                }
+
+
+                                            }) {
+                                                Icon(
+                                                    Icons.AutoMirrored.Filled.QueueMusic,
+                                                    contentDescription = null
+                                                )
                                             }
 
                                             IconButton(onClick = {
                                                 mediaControllerFuture?.get()?.prepare()
-                                                if (playerUiState.playbackState == PlaybackState.PLAYING)
-                                                    mediaControllerFuture?.get()?.pause()
-                                                else
-                                                    mediaControllerFuture?.get()?.play()
+                                                if (playerUiState.playbackState == PlaybackState.PLAYING) mediaControllerFuture?.get()
+                                                    ?.pause()
+                                                else mediaControllerFuture?.get()?.play()
                                                 Log.d(
                                                     TAG,
                                                     "Playback toggled. Current state: ${playerUiState.playbackState}"
                                                 )
                                             }) {
-                                                if (playerUiState.playbackState == PlaybackState.PLAYING)
-                                                    Icon(Icons.Filled.Pause, contentDescription = null)
-                                                else
-                                                    Icon(
-                                                        Icons.Filled.PlayArrow,
-                                                        contentDescription = null
-                                                    )
+                                                if (playerUiState.playbackState == PlaybackState.PLAYING) Icon(
+                                                    Icons.Filled.Pause, contentDescription = null
+                                                )
+                                                else Icon(
+                                                    Icons.Filled.PlayArrow,
+                                                    contentDescription = null
+                                                )
 
                                             }
                                         }
                                     }
-                                }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Destination.SEARCH,
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .fillMaxSize()
-                    ) {
-                        composable(Destination.SEARCH) {
-                            SearchUI(
-                                searchUiState = searchUiState,
-                                onItemClicked = { item ->
-                                    Log.d(
-                                        TAG,
-                                        "Item clicked from search results: ${item.mediaUri}"
-                                    )
-                                    val bundle = Bundle().apply {
-                                        putString(
-                                            PlayerService.KEY_URI,
-                                            item.mediaUri
-                                        )
-                                        putBoolean(PlayerService.KEY_PLAY_WHEN_READY, true)
-                                    }
-                                    val command = when (item.infoType) {
-                                        InfoItem.InfoType.STREAM -> PlayerService.COMMAND_LOAD_STREAM_URI
-                                        InfoItem.InfoType.PLAYLIST -> PlayerService.COMMAND_LOAD_PLAYLIST_URI
-                                        else -> null
-                                    }
-                                    command?.let {
-                                        mediaControllerFuture?.get()?.sendCustomCommand(it, bundle)
-                                        Log.d(
-                                            TAG,
-                                            "Sent command ${it.customAction} with URI ${item.mediaUri}"
-                                        )
-                                    }
-                                },
-                                onEnqueue = { item ->
-                                    Log.d(
-                                        TAG,
-                                        "Enqueuing from search results: ${item.mediaUri}"
-                                    )
-                                    if (item.infoType == InfoItem.InfoType.STREAM) {
-                                        val bundle = Bundle().apply {
-                                            putString(
-                                                PlayerService.KEY_URI,
-                                                item.mediaUri
-                                            )
-                                        }
-                                        mediaControllerFuture?.get()?.sendCustomCommand(
-                                            PlayerService.COMMAND_ENQUEUE_URI,
-                                            bundle
-                                        )
-                                        Log.d(
-                                            TAG,
-                                            "Sent command ${PlayerService.COMMAND_ENQUEUE_URI.customAction} with URI ${item.mediaUri}"
-                                        )
-                                    }
-                                },
-                                onEnqueueNext = { item ->
-                                    Log.d(
-                                        TAG,
-                                        "EnqueueNext (acting as Enqueue): ${item.mediaUri}"
-                                    )
-                                    if (item.infoType == InfoItem.InfoType.STREAM) {
-                                        val bundle = Bundle().apply {
-                                            putString(
-                                                PlayerService.KEY_URI,
-                                                item.mediaUri
-                                            )
-                                        }
-                                        mediaControllerFuture?.get()?.sendCustomCommand(
-                                            PlayerService.COMMAND_ENQUEUE_URI,
-                                            bundle
-                                        )
-                                    }
-                                },
-                                onSearch = { searchViewModel.search() },
-                                onSearchQueryUpdated = { searchViewModel.updateQueryFrom(it) },
-                                onEnqueueRadio = { item ->
-                                    Log.d(
-                                        TAG,
-                                        "Enqueuing Radio for item: ${item.mediaUri}"
-                                    )
-
-                                    val bundle = Bundle().apply {
-                                        putString(
-                                            PlayerService.KEY_URI,
-                                            item.mediaUri
-                                        )
-                                    }
-                                    mediaControllerFuture?.get()?.sendCustomCommand(
-                                        PlayerService.COMMAND_START_RADIO,
-                                        bundle
-                                    )
-                                    Log.d(
-                                        TAG,
-                                        "Sent command ${PlayerService.COMMAND_START_RADIO.customAction} with URI ${item.mediaUri}"
-                                    )
-                                },
-                            )
+                                })
                         }
 
-                        composable(Destination.PLAYER) {
-                            var positionForUpdate by remember { mutableFloatStateOf(0F) }
-                            PlayerUI(
-                                playerUiState = playerUiState,
-                                onSeekTo = { position -> positionForUpdate = position },
-                                onPlayPause = {
-                                    mediaControllerFuture?.get()?.prepare()
-                                    if (playerUiState.playbackState == PlaybackState.PLAYING)
-                                        mediaControllerFuture?.get()?.pause()
-                                    else
-                                        mediaControllerFuture?.get()?.play()
-                                    Log.d(
-                                        TAG,
-                                        "Playback toggled. Current state: ${playerUiState.playbackState}"
-                                    )
-                                },
-                                onPlayNext = {
-                                    mediaControllerFuture?.get()?.seekToNextMediaItem()
-                                    Log.d(TAG, "SeekToNext triggered")
-                                },
-                                onPlayPrevious = {
-                                    mediaControllerFuture?.get()?.seekToPreviousMediaItem()
-                                    Log.d(TAG, "SeekToPrevious triggered")
-                                },
-                                onQueueIconClicked = {
-                                    navController.navigate(Destination.QUEUE, navOptions = navOptions { launchSingleTop = true })
-                                },
-                                onPerformSeek = {
-                                    Log.d(TAG, "Perform seek to percentage: $positionForUpdate")
-                                    val bundle = Bundle().apply {
-                                        putFloat(PlayerService.KEY_PERCENTAGE, positionForUpdate)
+                        AnimatedVisibility(
+                            visible = isExpanded,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                            exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                        ) {
+                            VerticalPager(
+                                state = pagerState,
+                            ) { page ->
+                                when (page) {
+                                    0 -> {
+                                        PlayerUI(
+                                            playerUiState = playerUiState,
+                                            onSeekTo = { position ->
+                                                val percentage = if (position > 0) {
+                                                    mediaControllerFuture?.get()?.duration?.let { position / it }
+                                                        ?: 0F
+                                                } else 0F
+                                                Log.d(
+                                                    TAG, "Perform seek to percentage: $percentage"
+                                                )
+                                                val bundle = Bundle().apply {
+                                                    putFloat(
+                                                        PlayerService.KEY_PERCENTAGE, percentage
+                                                    )
+                                                }
+                                                mediaControllerFuture?.get()?.sendCustomCommand(
+                                                    PlayerService.COMMAND_SEEK_TO_PERCENTAGE, bundle
+                                                )
+                                            },
+                                            onPlayPause = {
+                                                mediaControllerFuture?.get()?.prepare()
+                                                if (playerUiState.playbackState == PlaybackState.PLAYING) mediaControllerFuture?.get()
+                                                    ?.pause()
+                                                else mediaControllerFuture?.get()?.play()
+                                                Log.d(
+                                                    TAG,
+                                                    "Playback toggled. Current state: ${playerUiState.playbackState}"
+                                                )
+                                            },
+                                            onPlayNext = {
+                                                mediaControllerFuture?.get()?.seekToNextMediaItem()
+                                                Log.d(TAG, "SeekToNext triggered")
+                                            },
+                                            onPlayPrevious = {
+                                                mediaControllerFuture?.get()
+                                                    ?.seekToPreviousMediaItem()
+                                                Log.d(TAG, "SeekToPrevious triggered")
+                                            },
+                                            onQueueIconClicked = {
+                                                scope.launch { pagerState.animateScrollToPage(page = 1) }
+                                            },
+                                            onCollapse = {
+                                                scope.launch {
+                                                    scaffoldState.bottomSheetState.partialExpand()
+                                                }
+                                            })
                                     }
-                                    mediaControllerFuture?.get()?.sendCustomCommand(
-                                        PlayerService.COMMAND_SEEK_TO_PERCENTAGE,
-                                        bundle
-                                    )
+
+
+                                    1 -> {
+                                        QueueUI(
+                                            items = playerUiState.queue.map { it.toMediaListItem() }, // Adapt based on actual item type
+                                            onItemClicked = { index ->
+                                                Log.d(TAG, "Queue item clicked: index $index")
+                                                mediaControllerFuture?.get()
+                                                    ?.seekToDefaultPosition(index)
+                                                mediaControllerFuture?.get()
+                                                    ?.play() // Optional: start playing selected item
+                                            })
+                                    }
                                 }
-                            )
+                            }
                         }
 
-                        composable(Destination.QUEUE) {
-                            QueueUI(
-                                items = playerUiState.queue.map { it.toMediaListItem() }, // Adapt based on actual item type
-                                onItemClicked = { index ->
-                                    Log.d(TAG, "Queue item clicked: index $index")
-                                    mediaControllerFuture?.get()?.seekToDefaultPosition(index)
-                                    mediaControllerFuture?.get()
-                                        ?.play() // Optional: start playing selected item
-                                }
+                    }) { _ ->
+
+                    SearchUI(
+                        searchUiState = searchUiState,
+                        onItemClicked = { item ->
+                            Log.d(
+                                TAG, "Item clicked from search results: ${item.mediaUri}"
                             )
-                        }
-                    }
+                            val bundle = Bundle().apply {
+                                putString(
+                                    PlayerService.KEY_URI, item.mediaUri
+                                )
+                                putBoolean(PlayerService.KEY_PLAY_WHEN_READY, true)
+                            }
+                            val command = when (item.infoType) {
+                                InfoItem.InfoType.STREAM -> PlayerService.COMMAND_LOAD_STREAM_URI
+                                InfoItem.InfoType.PLAYLIST -> PlayerService.COMMAND_LOAD_PLAYLIST_URI
+                                else -> null
+                            }
+                            command?.let {
+                                mediaControllerFuture?.get()?.sendCustomCommand(it, bundle)
+                                Log.d(
+                                    TAG, "Sent command ${it.customAction} with URI ${item.mediaUri}"
+                                )
+                            }
+                        },
+                        onEnqueue = { item ->
+                            Log.d(
+                                TAG, "Enqueuing from search results: ${item.mediaUri}"
+                            )
+                            if (item.infoType == InfoItem.InfoType.STREAM) {
+                                val bundle = Bundle().apply {
+                                    putString(
+                                        PlayerService.KEY_URI, item.mediaUri
+                                    )
+                                }
+                                mediaControllerFuture?.get()?.sendCustomCommand(
+                                    PlayerService.COMMAND_ENQUEUE_URI, bundle
+                                )
+                                Log.d(
+                                    TAG,
+                                    "Sent command ${PlayerService.COMMAND_ENQUEUE_URI.customAction} with URI ${item.mediaUri}"
+                                )
+                            }
+                        },
+                        onEnqueueNext = { item ->
+                            Log.d(
+                                TAG, "EnqueueNext: ${item.mediaUri}"
+                            )
+                            if (item.infoType == InfoItem.InfoType.STREAM) {
+                                val bundle = Bundle().apply {
+                                    putString(
+                                        PlayerService.KEY_URI, item.mediaUri
+                                    )
+                                }
+                                mediaControllerFuture?.get()?.sendCustomCommand(
+                                    PlayerService.COMMAND_ENQUEUE_NEXT_URI, bundle
+                                )
+                            }
+                        },
+                        onSearch = { searchViewModel.search() },
+                        onSearchQueryUpdated = { searchViewModel.updateQueryFrom(it) },
+                        onEnqueueRadio = { item ->
+                            Log.d(
+                                TAG, "Enqueuing Radio for item: ${item.mediaUri}"
+                            )
+
+                            val bundle = Bundle().apply {
+                                putString(
+                                    PlayerService.KEY_URI, item.mediaUri
+                                )
+                            }
+                            mediaControllerFuture?.get()?.sendCustomCommand(
+                                PlayerService.COMMAND_ENQUEUE_RADIO, bundle
+                            )
+                            Log.d(
+                                TAG,
+                                "Sent command ${PlayerService.COMMAND_ENQUEUE_RADIO.customAction} with URI ${item.mediaUri}"
+                            )
+                        },
+                    )
                 }
             }
         }
