@@ -1,19 +1,18 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.devtools.ksp)
 }
 
-android {
+extensions.configure<ApplicationExtension>("android") {
     namespace = "dev.crazo7924.onlymusic"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "dev.crazo7924.onlymusic"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 4
         versionName = "0.1.2"
@@ -32,16 +31,12 @@ android {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {
         compose = true
-    }
-
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     testOptions {
@@ -50,12 +45,14 @@ android {
             isReturnDefaultValues = true
         }
     }
-}
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.fromTarget(JavaVersion.VERSION_1_8.toString())
+
+    sourceSets {
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 }
+
 dependencies {
 
     implementation(libs.androidx.navigation.compose.android)
