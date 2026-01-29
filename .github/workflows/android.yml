@@ -19,6 +19,7 @@ on:
       - "images/**"
       - "LICENSE*"
       - "CHANGELOG*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -41,4 +42,13 @@ jobs:
       run: chmod +x ./gradlew
       
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew assembleDebug
+
+    - name: Upload debug APK
+      if: ${{ github.event_name == 'workflow_dispatch' && success() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: |
+          app/build/outputs/apk/**/debug/*.apk
+          **/build/outputs/apk/**/debug/*.apk
