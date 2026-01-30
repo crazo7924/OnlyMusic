@@ -55,7 +55,7 @@ class NewPipeMusicRepository : MusicRepository {
                             title = item.name,
                             artist = item.uploaderName.substringBefore( " - "),
                             infoType = item.infoType,
-                            thumbnailUri = item.thumbnails.last().url,
+                            thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
                             mediaUri = item.url,
                             duration = item.duration
                         )
@@ -85,8 +85,8 @@ class NewPipeMusicRepository : MusicRepository {
                             title = extractor.name,
                             artist = extractor.uploaderName.substringBefore(" - "),
                             infoType = InfoType.STREAM,
-                            thumbnailUri = extractor.thumbnails.last().url,
-                            mediaUri = extractor.audioStreams.last().content,
+                            thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
+                            mediaUri = extractor.audioStreams.maxBy { audioStream -> audioStream.averageBitrate }.content,
                             duration = extractor.length * 1000L
                         )
                     )
