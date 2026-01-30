@@ -46,7 +46,7 @@ class NewPipeMusicRepository : MusicRepository {
 
             val result = runCatching {
                 val items = extractor.initialPage.items
-                Log.d(TAG, "count: ${items.size}")
+                Log.d(TAG, "search results count: ${items.size}")
                 if (items.isEmpty()) return@runCatching listOf()
                 return@runCatching items.map { item ->
                     if(item !is StreamInfoItem) Result.failure(Throwable("Got an unexpected InfoItem type in search results"))
