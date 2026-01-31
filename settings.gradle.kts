@@ -33,6 +33,11 @@ dependencyResolutionManagement {
 
 rootProject.name = "OnlyMusic"
 include(":app")
+include(":core")
+include(":data")
+include(":features:player")
+include(":features:search")
+
 //includeBuild("../NewPipeExtractor") {
 //    dependencySubstitution {
 //        substitute(module("com.github.teamnewpipe:NewPipeExtractor")).using(
