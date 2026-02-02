@@ -34,6 +34,7 @@ coroutinesTest = "1.10.2"
 coreTesting = "2.2.0"
 uiToolingPreview = "1.10.2"
 uiTooling = "1.10.2"
+activityKtx = "1.12.3"
 
 [libraries]
 # AndroidX
@@ -89,6 +90,7 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "uiToolingPreview" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
