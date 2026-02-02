@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <application
         android:allowBackup="true"
@@ -16,7 +17,7 @@
         android:theme="@style/Theme.OnlyMusic"
         tools:targetApi="31">
         <service
-            android:name="dev.crazo7924.onlymusic.player.PlayerService"
+            android:name="dev.crazo7924.onlymusic.service.PlayerService"
             android:foregroundServiceType="mediaPlayback"
             android:enabled="true"
             android:exported="false">
@@ -27,7 +28,7 @@
         </service>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.OnlyMusic">
             <intent-filter>
@@ -36,10 +37,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Workaround for https://github.com/robolectric/robolectric/pull/4736 -->
-        <activity
-            android:name="androidx.activity.ComponentActivity"
-            android:exported="true" />
     </application>
 
 </manifest>
