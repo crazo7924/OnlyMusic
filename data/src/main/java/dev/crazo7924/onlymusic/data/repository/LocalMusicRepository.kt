@@ -24,8 +24,8 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
     }
 
     override suspend fun search(query: String): List<Result<MediaListItem>> {
-        return playlistDao.getLikedSongs().songs.map { 
+        return playlistDao.getLikedSongs()?.songs?.map {
             Result.success(it.toMediaListItem())
-        }
+        } ?: emptyList()
     }
 }
