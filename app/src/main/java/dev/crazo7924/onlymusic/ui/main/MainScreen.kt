@@ -66,6 +66,7 @@ fun MainScreen(
     BottomSheetScaffold(
         sheetPeekHeight = 80.dp,
         scaffoldState = scaffoldState,
+        sheetShape = RectangleShape,
         sheetDragHandle = null,
         sheetContent = {
             AnimatedVisibility(
