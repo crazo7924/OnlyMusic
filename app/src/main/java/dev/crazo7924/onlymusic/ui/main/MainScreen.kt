@@ -29,17 +29,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import dev.crazo7924.onlymusic.player.MediaControllerManager
-import dev.crazo7924.onlymusic.player.PlaybackState
-import dev.crazo7924.onlymusic.player.PlayerService
-import dev.crazo7924.onlymusic.player.PlayerViewModel
-import dev.crazo7924.onlymusic.player.ui.PlayerUI
-import dev.crazo7924.onlymusic.player.ui.QueueUI
-import dev.crazo7924.onlymusic.search.SearchViewModel
-import dev.crazo7924.onlymusic.search.ui.SearchUI
-import dev.crazo7924.onlymusic.ui.components.toMediaListItem
+import dev.crazo7924.onlymusic.MediaControllerManager
+import dev.crazo7924.onlymusic.core.ui.components.toMediaListItem
+import dev.crazo7924.onlymusic.features.player.PlaybackState
+import dev.crazo7924.onlymusic.features.player.PlayerViewModel
+import dev.crazo7924.onlymusic.features.player.ui.PlayerUI
+import dev.crazo7924.onlymusic.features.player.ui.QueueUI
+import dev.crazo7924.onlymusic.features.search.SearchViewModel
+import dev.crazo7924.onlymusic.features.search.ui.SearchUI
+import dev.crazo7924.onlymusic.service.PlayerService
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.InfoItem
 
