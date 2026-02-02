@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
 import java.net.URI
 import java.util.UUID
 
@@ -23,6 +24,18 @@ abstract class OnlyMusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
 }
 
+val initPlaylistCallback = object : RoomDatabase.Callback() {
+    override fun onCreate(db: SupportSQLiteDatabase) {
+        super.onCreate(db)
+        db.execSQL("INSERT INTO Playlist (playlistId, name, playlistType) VALUES (?, 'liked', 'INTERNAL')",
+            arrayOf(UUID.randomUUID())
+        )
+        db.execSQL("INSERT INTO Playlist (playlistId, name, playlistType) VALUES (?, 'recent', 'INTERNAL')",
+            arrayOf(UUID.randomUUID())
+        )
+    }
+}
+
 class Converters {
     @TypeConverter
     fun uriToString(uri: URI?): String? {
@@ -31,7 +44,7 @@ class Converters {
 
     @TypeConverter
     fun stringToURI(uri: String?): URI? {
-        return URI.create(uri)
+        return uri?.let { URI(it) }
     }
 
     @TypeConverter
@@ -41,6 +54,6 @@ class Converters {
 
     @TypeConverter
     fun stringToUUID(uuid: String?): UUID? {
-        return UUID.fromString(uuid)
+        return uuid?.let { UUID.fromString(it) }
     }
 }

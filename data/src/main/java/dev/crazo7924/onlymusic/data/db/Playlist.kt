@@ -11,13 +11,10 @@ import java.util.UUID
  * It has it's own [playlistId] and a [name] to distinguish from others.
  *
  * The [playlistType] could be
- *
  * an [PlaylistType.ALBUM],
- *
- * a [PlaylistType.PUBLIC] or
- *
- * a [PlaylistType.LOCAL] one.
- *
+ * a [PlaylistType.PUBLIC],
+ * a [PlaylistType.LOCAL] or
+ * a [PlaylistType.INTERNAL] one.
  **/
 @Entity
 data class Playlist(
@@ -25,7 +22,6 @@ data class Playlist(
     val name: String,
     /** This is null iff it is locally stored */
     val uri: URI?,
-    val artworkUri: URI,
     val playlistType: PlaylistType,
 )
 
@@ -35,5 +31,7 @@ data class Playlist(
 enum class PlaylistType {
     ALBUM,
     PUBLIC,
-    LOCAL
+    LOCAL,
+
+    INTERNAL
 }
