@@ -9,6 +9,8 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    assignees:
+      - "crazo7924"
 
   - package-ecosystem: "github-actions"  # enable updates for GH Actions used in workflows
     directory: "/"
