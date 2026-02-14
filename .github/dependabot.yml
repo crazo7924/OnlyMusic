@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "gradle"
-    directory: "/" # adjust if your Gradle build is in a subdirectory
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -9,8 +9,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-    # assignees:
-    #   - "crazo7924"
 
   - package-ecosystem: "github-actions"  # enable updates for GH Actions used in workflows
     directory: "/"
