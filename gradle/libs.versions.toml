@@ -2,7 +2,7 @@
 [versions]
 agp = "9.0.0"
 kotlin = "2.3.0"
-ksp = "2.3.4"
+ksp = "2.3.5"
 
 # AndroidX
 coreKtx = "1.17.0"
