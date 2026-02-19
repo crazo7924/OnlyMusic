@@ -72,4 +72,11 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
+
+    androidTestImplementation(libs.androidx.core.testing)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit.ktx)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
