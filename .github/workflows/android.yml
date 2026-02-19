@@ -1,17 +1,6 @@
 name: Android CI
 
 on:
-  pull_request:
-    branches: [ "main" ]
-    paths-ignore:
-      - ".github/*.yml"
-      - ".github/**"
-      - "**/*.md"
-      - "docs/**"
-      - "assets/**"
-      - "images/**"
-      - "LICENSE*"
-      - "CHANGELOG*"
   workflow_dispatch:
 
 jobs:
@@ -35,7 +24,7 @@ jobs:
       run: ./gradlew assembleDebug
 
     - name: Upload debug APK
-      if: ${{ github.event_name == 'workflow_dispatch' && success() }}
+      if: success()
       uses: actions/upload-artifact@v6
       with:
         name: debug-apk
