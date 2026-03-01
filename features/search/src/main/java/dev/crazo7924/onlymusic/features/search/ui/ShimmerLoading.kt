@@ -1,4 +1,4 @@
-package dev.crazo7924.onlymusic.core.ui.components
+package dev.crazo7924.onlymusic.features.search.ui
 
 import androidx.compose.animation.core.EaseInOutQuart
 import androidx.compose.animation.core.RepeatMode
