@@ -18,6 +18,7 @@ import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import dev.crazo7924.onlymusic.core.ui.components.toMediaItem
 import dev.crazo7924.onlymusic.data.repository.MusicRepository
 import dev.crazo7924.onlymusic.data.repository.NewPipeMusicRepository
 import dev.crazo7924.onlymusic.ui.main.MainActivity
