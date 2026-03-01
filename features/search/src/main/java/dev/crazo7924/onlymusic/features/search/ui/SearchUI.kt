@@ -100,7 +100,7 @@ fun SearchUI(
 
             SearchState.ERROR -> Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
