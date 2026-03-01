@@ -33,7 +33,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.crazo7924.onlymusic.MediaControllerManager
-import dev.crazo7924.onlymusic.core.ui.components.toMediaListItem
+import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerViewModel
 import dev.crazo7924.onlymusic.features.player.ui.PlayerUI
