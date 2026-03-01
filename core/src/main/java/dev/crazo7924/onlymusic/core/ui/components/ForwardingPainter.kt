@@ -1,5 +1,6 @@
 package dev.crazo7924.onlymusic.core.ui.components
 
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -14,8 +15,9 @@ fun forwardingPainter(
     painter: Painter,
     alpha: Float = DefaultAlpha,
     colorFilter: ColorFilter? = null,
+    intrinsicSize: Size? = null,
     onDraw: DrawScope.(ForwardingDrawInfo) -> Unit = DefaultOnDraw,
-): Painter = ForwardingPainter(painter, alpha, colorFilter, onDraw)
+): Painter = ForwardingPainter(painter, alpha, colorFilter, intrinsicSize, onDraw)
 
 data class ForwardingDrawInfo(
     val painter: Painter,
@@ -27,12 +29,14 @@ private class ForwardingPainter(
     private val painter: Painter,
     private var alpha: Float,
     private var colorFilter: ColorFilter?,
+    private var size: Size?,
     private val onDraw: DrawScope.(ForwardingDrawInfo) -> Unit,
 ) : Painter() {
 
     private var info = newInfo()
 
-    override val intrinsicSize get() = painter.intrinsicSize
+    override val intrinsicSize: Size
+        get() = if (size != null) size!! else painter.intrinsicSize
 
     override fun applyAlpha(alpha: Float): Boolean {
         if (alpha != DefaultAlpha) {
