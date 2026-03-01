@@ -1,6 +1,6 @@
 package dev.crazo7924.onlymusic.data
 
-import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
+import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import org.schabi.newpipe.extractor.InfoItem
 

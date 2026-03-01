@@ -40,9 +40,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.crazo7924.onlymusic.core.ui.components.forwardingPainter
 import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerUiState
-import dev.crazo7924.onlymusic.core.ui.components.forwardingPainter
 
 @Composable
 fun PlayerUI(
@@ -84,7 +84,8 @@ fun PlayerUI(
                 val icon = forwardingPainter(
                     rememberVectorPainter(
                         Icons.Rounded.Album
-                    ), colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
+                    ),
+                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
                 )
 
                 Box(

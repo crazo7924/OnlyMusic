@@ -1,6 +1,6 @@
 package dev.crazo7924.onlymusic.features.search
 
-import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
+import dev.crazo7924.onlymusic.core.MediaListItem
 
 enum class SearchState {
     INITIAL,

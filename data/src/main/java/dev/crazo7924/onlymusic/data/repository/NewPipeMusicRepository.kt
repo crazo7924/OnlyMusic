@@ -3,7 +3,7 @@ package dev.crazo7924.onlymusic.data.repository
 import android.util.Log
 import androidx.core.net.toUri
 import dev.crazo7924.onlymusic.core.DownloaderImpl
-import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
+import dev.crazo7924.onlymusic.core.MediaListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.InfoItem.InfoType

@@ -1,29 +1,36 @@
 package dev.crazo7924.onlymusic.core.ui.components
 
-import androidx.core.net.toUri
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Comment
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import org.schabi.newpipe.extractor.InfoItem
 
-fun MediaListItem.toMediaItem(): MediaItem {
-    val mediaItemBuilder = MediaItem.Builder()
-    val mediaMetadataBuilder = MediaMetadata.Builder()
-    mediaMetadataBuilder.setArtist(artist)
-    mediaMetadataBuilder.setTitle(title)
-    mediaMetadataBuilder.setArtworkUri(thumbnailUri?.toUri())
-    mediaMetadataBuilder.setDurationMs(duration)
-    mediaItemBuilder.setMediaMetadata(mediaMetadataBuilder.build())
-    mediaItemBuilder.setUri(mediaUri?.toUri())
-    return mediaItemBuilder.build()
-}
+@Composable
+fun iconForInfoType(infoType: InfoItem.InfoType, intrinsicSize: Size? = null): Painter {
+    return forwardingPainter(
+        rememberVectorPainter(
+            when (infoType) {
+                // Song
+                InfoItem.InfoType.STREAM -> Icons.Rounded.MusicNote
+                // Album / Playlist
+                InfoItem.InfoType.PLAYLIST -> Icons.AutoMirrored.Rounded.List
 
-fun MediaItem.toMediaListItem(): MediaListItem {
-    return MediaListItem(
-        title = this.mediaMetadata.title?.toString(),
-        artist = this.mediaMetadata.artist?.toString(),
-        infoType = InfoItem.InfoType.STREAM,
-        thumbnailUri = this.mediaMetadata.artworkUri?.toString(),
-        mediaUri = this.localConfiguration?.uri?.toString(),
-        duration = this.mediaMetadata.durationMs
+                // Artist or Channel
+                InfoItem.InfoType.CHANNEL -> Icons.Rounded.Person
+
+                // Comment (unused in here but kept for exhaustive branching)
+                InfoItem.InfoType.COMMENT -> Icons.AutoMirrored.Rounded.Comment
+            }
+        ),
+        colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
+        intrinsicSize = intrinsicSize,
     )
 }

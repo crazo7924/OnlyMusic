@@ -1,6 +1,6 @@
 package dev.crazo7924.onlymusic.data.repository
 
-import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
+import dev.crazo7924.onlymusic.core.MediaListItem
 
 interface MusicRepository {
     suspend fun loadMediaUri(uri: String?): Result<MediaListItem>
