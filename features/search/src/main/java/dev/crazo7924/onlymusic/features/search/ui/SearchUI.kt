@@ -19,10 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.crazo7924.onlymusic.core.ui.components.MediaList
+import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
+import dev.crazo7924.onlymusic.core.ui.components.shimmerLoading
 import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
-import dev.crazo7924.onlymusic.core.ui.components.shimmerLoading
-import dev.crazo7924.onlymusic.core.ui.components.MediaListItem
 
 @Composable
 fun SearchUI(
@@ -113,9 +113,6 @@ fun SearchUI(
             SearchState.LOADING -> MediaList(
                 mediaItems = searchUiState.suggestions,
                 onItemClicked = { _, _ -> /* no-op */ },
-                onEnqueue = {/* no-op */ },
-                onEnqueueNext = {/* no-op */ },
-                onEnqueueRadio = {/* no-op */ }
             )
         }
     }

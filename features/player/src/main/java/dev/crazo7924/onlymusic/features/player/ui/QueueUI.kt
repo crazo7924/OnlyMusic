@@ -28,9 +28,6 @@ fun QueueUI(items: List<MediaListItem>, onItemClicked: (Int) -> Unit) {
             onItemClicked = { _, index ->
                 onItemClicked(index)
             },
-            onEnqueue = {},
-            onEnqueueNext = {},
-            onEnqueueRadio = {}
         )
     }
 }

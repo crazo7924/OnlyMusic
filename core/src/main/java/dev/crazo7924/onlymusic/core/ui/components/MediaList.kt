@@ -41,9 +41,9 @@ fun MediaList(
     modifier: Modifier = Modifier,
     mediaItems: List<MediaListItem>,
     onItemClicked: (MediaListItem, Int) -> Unit,
-    onEnqueue: (MediaListItem) -> Unit,
-    onEnqueueNext: (MediaListItem) -> Unit,
-    onEnqueueRadio: (MediaListItem) -> Unit,
+    onEnqueue: (MediaListItem) -> Unit = {},
+    onEnqueueNext: (MediaListItem) -> Unit = {},
+    onEnqueueRadio: (MediaListItem) -> Unit = {},
 ) {
     LazyColumn(modifier = modifier) {
         items(count = mediaItems.size) { index ->
@@ -159,8 +159,5 @@ private fun MediaListPreview() {
             )
         ),
         onItemClicked = { _, _ -> /* no-op */ },
-        onEnqueue = { /* no-op */ },
-        onEnqueueNext = { /* no-op */ },
-        onEnqueueRadio = { /* no-op */ }
     )
 }
