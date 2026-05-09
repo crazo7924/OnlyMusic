@@ -1,11 +1,12 @@
 package dev.crazo7924.onlymusic.data.repository
 
 import dev.crazo7924.onlymusic.core.MediaListItem
+import kotlinx.coroutines.flow.Flow
 
 interface MusicRepository {
     suspend fun loadMediaUri(uri: String?): Result<MediaListItem>
-    suspend fun loadPlaylistUri(uri: String?): List<Result<MediaListItem>>
+    suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>>
 
-    suspend fun loadAutoPlaylistUri(uri: String?): List<Result<MediaListItem>>
-    suspend fun search(query: String): List<Result<MediaListItem>>
+    suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>>
+    suspend fun search(query: String): Flow<Result<MediaListItem>>
 }

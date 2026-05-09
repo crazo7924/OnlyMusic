@@ -5,6 +5,9 @@ import androidx.core.net.toUri
 import dev.crazo7924.onlymusic.core.DownloaderImpl
 import dev.crazo7924.onlymusic.core.MediaListItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.InfoItem.InfoType
 import org.schabi.newpipe.extractor.NewPipe
@@ -25,8 +28,8 @@ class NewPipeMusicRepository : MusicRepository {
     }
 
 
-    override suspend fun search(query: String): List<Result<MediaListItem>> =
-        withContext(Dispatchers.IO) {
+    override suspend fun search(query: String): Flow<Result<MediaListItem>> =
+        flow {
             val linkHandler = YoutubeSearchQueryHandlerFactory.getInstance().fromQuery(
                 query, listOf(MUSIC_SONGS), ""
             )
@@ -41,33 +44,33 @@ class NewPipeMusicRepository : MusicRepository {
 
             fetchPageResult.onFailure {
                 Log.e(TAG, "search fetch error: $it")
-                return@withContext listOf()
             }
 
             val result = runCatching {
                 val items = extractor.initialPage.items
                 Log.d(TAG, "search results count: ${items.size}")
-                if (items.isEmpty()) return@runCatching listOf()
+                if (items.isEmpty()) Log.e(TAG, "No results")
                 return@runCatching items.map { item ->
-                    if(item !is StreamInfoItem) Result.failure(Throwable("Got an unexpected InfoItem type in search results"))
-                    else Result.success(
-                        MediaListItem(
-                            title = item.name,
-                            artist = item.uploaderName.substringBefore( " - "),
-                            infoType = item.infoType,
-                            thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
-                            mediaUri = item.url,
-                            duration = item.duration
+                    if (item !is StreamInfoItem) emit(Result.failure(Throwable("Got an unexpected InfoItem type in search results")))
+                    else emit(
+                        Result.success(
+                            MediaListItem(
+                                title = item.name,
+                                artist = item.uploaderName.substringBefore(" - "),
+                                infoType = item.infoType,
+                                thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
+                                mediaUri = item.url,
+                                duration = item.duration
+                            )
                         )
                     )
                 }
             }
 
-            return@withContext result.getOrElse {
+            result.getOrElse {
                 Log.e(TAG, "search failure: $it")
-                return@withContext emptyList()
             }
-        }
+        }.flowOn(Dispatchers.IO)
 
     override suspend fun loadMediaUri(uri: String?): Result<MediaListItem> =
         withContext(Dispatchers.IO) {
@@ -80,6 +83,10 @@ class NewPipeMusicRepository : MusicRepository {
 
             return@withContext result.fold(
                 onSuccess = {
+                    Log.d(
+                        TAG,
+                        "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
+                    )
                     Result.success(
                         MediaListItem(
                             title = extractor.name,
@@ -98,33 +105,29 @@ class NewPipeMusicRepository : MusicRepository {
         }
 
 
-    override suspend fun loadPlaylistUri(uri: String?): List<Result<MediaListItem>> = withContext(
-        Dispatchers.IO
-    ) {
+    override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> = flow {
         val youtubeService = ServiceList.YouTube
         val initOutcome = runCatching { youtubeService.getPlaylistExtractor(uri) }
 
-        val playListExtractor = initOutcome.getOrElse {
-            return@withContext emptyList()
+        val playListExtractor = initOutcome.getOrNull()
+
+        val outcome = runCatching { playListExtractor?.fetchPage() }
+
+        outcome.onSuccess {
+
+            playListExtractor?.initialPage?.items?.forEach { item ->
+                emit(loadMediaUri(item.url))
+            }
         }
 
-        val outcome = runCatching { playListExtractor.fetchPage() }
+    }.flowOn(Dispatchers.IO)
 
-        outcome.onFailure {
-            return@withContext emptyList()
-        }
-
-        return@withContext playListExtractor.initialPage.items.map { item ->
-            loadMediaUri(item.url)
-        }
-    }
-
-    override suspend fun loadAutoPlaylistUri(uri: String?): List<Result<MediaListItem>> =
-        withContext(Dispatchers.IO) {
-            if (uri == null) return@withContext emptyList()
+    override suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
+        flow {
+            if (uri == null) return@flow
 
             val id = uri.toUri().getQueryParameter("v") ?: ""
-            if (id.isEmpty()) return@withContext emptyList()
+            if (id.isEmpty()) return@flow
 
             val youtubeService = ServiceList.YouTube
             val initOutcome = runCatching {
@@ -136,19 +139,19 @@ class NewPipeMusicRepository : MusicRepository {
             }
             val playListExtractor = initOutcome.getOrElse {
                 it.printStackTrace()
-                return@withContext emptyList()
+                return@flow
             }
 
             val outcome = runCatching { playListExtractor.fetchPage() }
             outcome.onFailure {
                 it.printStackTrace()
-                return@withContext emptyList()
+                return@flow
             }
 
-            return@withContext playListExtractor.initialPage.items.map { item ->
-                loadMediaUri(item.url)
+            playListExtractor.initialPage.items.forEach { item ->
+                emit(loadMediaUri(item.url))
             }
-        }
+        }.flowOn(Dispatchers.IO)
 
     companion object {
         private const val TAG = "NewPipeMusicRepository"

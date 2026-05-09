@@ -7,9 +7,13 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        mavenCentral()
         gradlePluginPortal()
+        mavenCentral()
+
     }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -24,7 +28,7 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://jitpack.io")
             content {
-                includeGroupByRegex("com\\.github\\.(teamnewpipe|TeamNewPipe).*")
+                includeGroupByRegex("com\\.github\\.TeamNewPipe.*")
             }
         }
         mavenCentral()
@@ -45,3 +49,4 @@ include(":features:search")
 //        )
 //    }
 //}
+include(":ytmusicapi")

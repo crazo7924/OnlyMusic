@@ -7,28 +7,24 @@ import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongDao
 import dev.crazo7924.onlymusic.data.toMediaListItem
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import java.net.URI
 import java.util.UUID
 
 class CachingMusicRepository(
     private val remoteRepository: MusicRepository,
     private val playlistDao: PlaylistDao,
-    private val songDao: SongDao
+    private val songDao: SongDao,
 ) : MusicRepository by remoteRepository {
 
-    override suspend fun search(query: String): List<Result<MediaListItem>> = coroutineScope {
-
-        val cachedResults = async(Dispatchers.IO) {
-            playlistDao.getRecentSongs()?.songs?.map {
-                Result.success(it.toMediaListItem())
-            } ?: emptyList()
-        }
+    override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
 
         val remoteResults = remoteRepository.search(query)
-        remoteResults.forEach { result ->
+
+        remoteResults.collect { result ->
+            emit(result)
             result.getOrNull()?.let { mediaListItem ->
                 val song = Song(
                     songId = UUID.randomUUID(),
@@ -39,20 +35,18 @@ class CachingMusicRepository(
                 )
                 songDao.insertSong(song)
 
-                val recentPlaylistId = async(Dispatchers.IO) {
-                    playlistDao.getRecentPlaylistId()
-                }
+                val recentPlaylistId = playlistDao.getRecentPlaylistId()
 
-                withContext(Dispatchers.IO) {
-                    playlistDao.insertSongToPlaylist(
-                        PlaylistSongsCrossRef(
-                            playlistId = recentPlaylistId.await(),
-                            songId = song.songId
-                        )
+                playlistDao.insertSongToPlaylist(
+                    PlaylistSongsCrossRef(
+                        playlistId = recentPlaylistId, songId = song.songId
                     )
-                }
+                )
             }
         }
-        return@coroutineScope remoteResults + cachedResults.await()
-    }
+
+        playlistDao.getRecentSongs()?.songs?.forEach {
+            emit(Result.success(it.toMediaListItem()))
+        }
+    }.flowOn(Dispatchers.IO)
 }

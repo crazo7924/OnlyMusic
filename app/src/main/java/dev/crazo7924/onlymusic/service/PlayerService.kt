@@ -152,9 +152,9 @@ class PlayerService : MediaSessionService() {
         fun processLoadPlaylistUri(playlistUri: String, playWhenReady: Boolean) {
             serviceScope.launch {
                 exoPlayer.clearMediaItems()
-                val results = musicRepository.loadPlaylistUri(playlistUri)
+                val playlistUriResult = musicRepository.loadPlaylistUri(playlistUri)
                 val mediaItems = mutableListOf<MediaItem>()
-                results.forEach { result ->
+                playlistUriResult.collect { result ->
                     result.onSuccess { mediaItems.add(it.toMediaItem()) }
                         .onFailure { error ->
                             Log.e(
@@ -180,16 +180,15 @@ class PlayerService : MediaSessionService() {
             serviceScope.launch {
                 Log.d(TAG, "Radio URI received: $mediaUri")
                 val loadedMediaItems = musicRepository.loadAutoPlaylistUri(mediaUri)
-                if (loadedMediaItems.isEmpty()) {
-                    Log.w(TAG, "No media items successfully loaded from radio URI $mediaUri")
-                    return@launch
-                }
 
-                loadedMediaItems.forEach { result ->
+                loadedMediaItems.collect { result ->
                     result.onSuccess { item ->
                         withContext(Dispatchers.Main) {
                             exoPlayer.addMediaItem(item.toMediaItem())
                         }
+                    }
+                    result.onFailure {
+                        Log.e(TAG, "Bad media item received from radio url", it)
                     }
                 }
 
@@ -215,7 +214,7 @@ class PlayerService : MediaSessionService() {
             serviceScope.launch {
                 val results = musicRepository.loadPlaylistUri(playlistUri)
                 val mediaItems = mutableListOf<MediaItem>()
-                results.forEach { result ->
+                results.collect { result ->
                     result.onSuccess { mediaItems.add(it.toMediaItem()) }
                         .onFailure { error ->
                             Log.e(

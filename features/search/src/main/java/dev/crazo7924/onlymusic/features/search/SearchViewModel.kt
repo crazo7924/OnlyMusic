@@ -49,7 +49,7 @@ class SearchViewModel(
                     searchState = SearchState.INITIAL
                 )
             }
-            suggestionsResult.forEach { resultItem ->
+            suggestionsResult.collect { resultItem ->
                 resultItem.onSuccess { media ->
                     _uiState.update {
                         it.copy(
@@ -60,7 +60,7 @@ class SearchViewModel(
                 }
             }
 
-            if (suggestionsResult.isEmpty()) {
+            if (_uiState.value.suggestions.isEmpty()) {
                 _uiState.update {
                     it.copy(searchState = SearchState.ERROR)
                 }

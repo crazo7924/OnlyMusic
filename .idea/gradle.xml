@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/features" />
             <option value="$PROJECT_DIR$/features/player" />
             <option value="$PROJECT_DIR$/features/search" />
+            <option value="$PROJECT_DIR$/ytmusicapi" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="true" />
