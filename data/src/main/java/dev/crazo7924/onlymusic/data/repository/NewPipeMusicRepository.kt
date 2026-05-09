@@ -55,6 +55,7 @@ class NewPipeMusicRepository : MusicRepository {
                     else emit(
                         Result.success(
                             MediaListItem(
+                                id = item.url.substringAfter("?v="),
                                 title = item.name,
                                 artist = item.uploaderName.substringBefore(" - "),
                                 infoType = item.infoType,
@@ -89,6 +90,7 @@ class NewPipeMusicRepository : MusicRepository {
                     )
                     Result.success(
                         MediaListItem(
+                            id = extractor.url.substringAfter("?v="),
                             title = extractor.name,
                             artist = extractor.uploaderName.substringBefore(" - "),
                             infoType = InfoType.STREAM,

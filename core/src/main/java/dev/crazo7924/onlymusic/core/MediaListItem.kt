@@ -6,6 +6,7 @@ import androidx.media3.common.MediaMetadata
 import org.schabi.newpipe.extractor.InfoItem
 
 data class MediaListItem(
+    val id: String,
     val title: String?,
     val artist: String? = null,
     val infoType: InfoItem.InfoType,
@@ -17,6 +18,7 @@ data class MediaListItem(
 fun MediaListItem.toMediaItem(): MediaItem {
     val mediaItemBuilder = MediaItem.Builder()
     val mediaMetadataBuilder = MediaMetadata.Builder()
+    mediaItemBuilder.setMediaId(id)
     mediaMetadataBuilder.setArtist(artist)
     mediaMetadataBuilder.setTitle(title)
     mediaMetadataBuilder.setArtworkUri(thumbnailUri?.toUri())
@@ -28,6 +30,7 @@ fun MediaListItem.toMediaItem(): MediaItem {
 
 fun MediaItem.toMediaListItem(): MediaListItem {
     return MediaListItem(
+        id = this.mediaId,
         title = this.mediaMetadata.title?.toString(),
         artist = this.mediaMetadata.artist?.toString(),
         infoType = InfoItem.InfoType.STREAM,

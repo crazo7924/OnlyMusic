@@ -113,19 +113,22 @@ private fun QueuePreview() {
                 artist = "Artist 1",
                 infoType = InfoItem.InfoType.STREAM,
                 thumbnailUri = null,
-                mediaUri = null
+                mediaUri = null,
+                id = "1"
             ), MediaListItem(
                 title = "Playlist 1",
                 artist = "Artist 2",
                 infoType = InfoItem.InfoType.PLAYLIST,
                 thumbnailUri = null,
-                mediaUri = null
+                mediaUri = null,
+                id = "2"
             ), MediaListItem(
                 title = "Channel 1",
                 artist = "Artist 3",
                 infoType = InfoItem.InfoType.CHANNEL,
                 thumbnailUri = null,
-                mediaUri = null
+                mediaUri = null,
+                id = "3"
             )
         ),
         onItemClicked = {},

@@ -18,10 +18,10 @@ interface PlaylistDao {
     fun getRecentSongs(): PlaylistWithSongs?
 
     @Query("Select playlistId from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
-    fun getRecentPlaylistId(): UUID
+    fun getRecentPlaylistId(): String
 
     @Query("Select playlistId from Playlist where name = 'liked' and playlistType = 'INTERNAL'")
-    fun getLikedPlaylistId(): UUID
+    fun getLikedPlaylistId(): String
 
     @Query("Select * from Playlist where name = :name and playlistType = 'LOCAL'")
     fun findPlaylistsByName(name: String): List<Playlist>

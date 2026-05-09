@@ -49,7 +49,7 @@ import org.schabi.newpipe.extractor.InfoItem
 fun MainScreen(
     playerViewModel: PlayerViewModel,
     searchViewModel: SearchViewModel,
-    mediaControllerManager: MediaControllerManager
+    mediaControllerManager: MediaControllerManager,
 ) {
     val playerUiState by playerViewModel.uiState.collectAsState()
     val searchUiState by searchViewModel.uiState.collectAsState()
@@ -133,8 +133,7 @@ fun MainScreen(
                                         Icons.Filled.Pause, contentDescription = null
                                     )
                                     else Icon(
-                                        Icons.Filled.PlayArrow,
-                                        contentDescription = null
+                                        Icons.Filled.PlayArrow, contentDescription = null
                                     )
 
                                 }
@@ -153,53 +152,59 @@ fun MainScreen(
                 ) { page ->
                     when (page) {
                         0 -> {
-                            PlayerUI(
-                                playerUiState = playerUiState,
-                                onSeekTo = { position ->
-                                    val controller = mediaControllerManager.getController()
-                                    val percentage = if (position > 0) {
-                                        controller?.duration?.let { position / it }
-                                            ?: 0F
-                                    } else 0F
-                                    Log.d(
-                                        MainActivity.TAG, "Perform seek to percentage: $percentage"
+                            PlayerUI(playerUiState = playerUiState, onSeekTo = { position ->
+                                val controller = mediaControllerManager.getController()
+                                val percentage = if (position > 0) {
+                                    controller?.duration?.let { position / it } ?: 0F
+                                } else 0F
+                                Log.d(
+                                    MainActivity.TAG, "Perform seek to percentage: $percentage"
+                                )
+                                val bundle = Bundle().apply {
+                                    putFloat(
+                                        PlayerService.KEY_PERCENTAGE, percentage
                                     )
-                                    val bundle = Bundle().apply {
-                                        putFloat(
-                                            PlayerService.KEY_PERCENTAGE, percentage
+                                }
+                                controller?.sendCustomCommand(
+                                    PlayerService.COMMAND_SEEK_TO_PERCENTAGE, bundle
+                                )
+                            }, onPlayPause = {
+                                val controller = mediaControllerManager.getController()
+                                controller?.prepare()
+                                if (playerUiState.playbackState == PlaybackState.PLAYING) controller?.pause()
+                                else controller?.play()
+                                Log.d(
+                                    MainActivity.TAG,
+                                    "Playback toggled. Current state: ${playerUiState.playbackState}"
+                                )
+                            }, onPlayNext = {
+                                mediaControllerManager.getController()?.seekToNextMediaItem()
+                                Log.d(MainActivity.TAG, "SeekToNext triggered")
+                            }, onPlayPrevious = {
+                                mediaControllerManager.getController()?.seekToPreviousMediaItem()
+                                Log.d(MainActivity.TAG, "SeekToPrevious triggered")
+                            }, onQueueIconClicked = {
+                                scope.launch { pagerState.animateScrollToPage(page = 1) }
+                            }, onRadioIconClicked = {
+                                scope.launch {
+                                    playerUiState.media?.mediaId?.let {
+                                        val bundle = Bundle().apply {
+                                            putString(
+                                                PlayerService.KEY_URI,
+                                                "https://music.youtube.com/watch?v=$it"
+                                            )
+                                        }
+                                        mediaControllerManager.getController()?.sendCustomCommand(
+                                            PlayerService.COMMAND_ENQUEUE_RADIO, bundle
                                         )
+                                        Log.d(MainActivity.TAG, "Enqueue radio triggered")
                                     }
-                                    controller?.sendCustomCommand(
-                                        PlayerService.COMMAND_SEEK_TO_PERCENTAGE, bundle
-                                    )
-                                },
-                                onPlayPause = {
-                                    val controller = mediaControllerManager.getController()
-                                    controller?.prepare()
-                                    if (playerUiState.playbackState == PlaybackState.PLAYING) controller?.pause()
-                                    else controller?.play()
-                                    Log.d(
-                                        MainActivity.TAG,
-                                        "Playback toggled. Current state: ${playerUiState.playbackState}"
-                                    )
-                                },
-                                onPlayNext = {
-                                    mediaControllerManager.getController()?.seekToNextMediaItem()
-                                    Log.d(MainActivity.TAG, "SeekToNext triggered")
-                                },
-                                onPlayPrevious = {
-                                    mediaControllerManager.getController()
-                                        ?.seekToPreviousMediaItem()
-                                    Log.d(MainActivity.TAG, "SeekToPrevious triggered")
-                                },
-                                onQueueIconClicked = {
-                                    scope.launch { pagerState.animateScrollToPage(page = 1) }
-                                },
-                                onCollapse = {
-                                    scope.launch {
-                                        scaffoldState.bottomSheetState.partialExpand()
-                                    }
-                                })
+                                }
+                            }, onCollapse = {
+                                scope.launch {
+                                    scaffoldState.bottomSheetState.partialExpand()
+                                }
+                            })
                         }
 
 
@@ -239,7 +244,8 @@ fun MainScreen(
                 command?.let {
                     mediaControllerManager.getController()?.sendCustomCommand(it, bundle)
                     Log.d(
-                        MainActivity.TAG, "Sent command ${it.customAction} with URI ${item.mediaUri}"
+                        MainActivity.TAG,
+                        "Sent command ${it.customAction} with URI ${item.mediaUri}"
                     )
                 }
             },

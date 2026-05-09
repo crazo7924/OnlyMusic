@@ -5,12 +5,11 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.Relation
-import java.util.UUID
 
 @Entity(primaryKeys = ["playlistId", "songId"], indices = [Index(value = ["songId"])])
 data class PlaylistSongsCrossRef(
-    val playlistId: UUID,
-    val songId: UUID
+    val playlistId: String,
+    val songId: String,
 )
 
 data class PlaylistWithSongs(

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.net.URI
-import java.util.UUID
 
 class CachingMusicRepository(
     private val remoteRepository: MusicRepository,
@@ -27,7 +26,7 @@ class CachingMusicRepository(
             emit(result)
             result.getOrNull()?.let { mediaListItem ->
                 val song = Song(
-                    songId = UUID.randomUUID(),
+                    songId = mediaListItem.id,
                     title = mediaListItem.title ?: "",
                     uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
                     artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },

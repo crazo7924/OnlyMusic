@@ -6,6 +6,7 @@ import org.schabi.newpipe.extractor.InfoItem
 
 fun SongWithArtists.toMediaListItem(): MediaListItem {
     return MediaListItem(
+        id = this.song.songId,
         title = this.song.title,
         artist = this.artists.joinToString { it.name },
         infoType = InfoItem.InfoType.STREAM, // It is always a Song

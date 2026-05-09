@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
@@ -52,6 +53,7 @@ fun PlayerUI(
     onPlayPrevious: () -> Unit,
     onQueueIconClicked: () -> Unit,
     onCollapse: () -> Unit,
+    onRadioIconClicked: () -> Unit,
 ) {
     Scaffold { paddingValues ->
         Box(
@@ -194,15 +196,32 @@ fun PlayerUI(
                     onValueChange = { onSeekTo(it) }
                 )
 
-                IconButton(
-                    modifier = Modifier.align(Alignment.End),
-                    onClick = onQueueIconClicked,
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                        contentDescription = "Queue",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterStart),
+                        onClick = onRadioIconClicked
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Radio,
+                            contentDescription = "Enqueue Radio",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        onClick = onQueueIconClicked,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            contentDescription = "Queue",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
@@ -219,5 +238,7 @@ private fun PlayerPreview() {
         onPlayNext = {},
         onPlayPrevious = {},
         onQueueIconClicked = {},
-        onCollapse = {})
+        onCollapse = {},
+        onRadioIconClicked = {}
+    )
 }

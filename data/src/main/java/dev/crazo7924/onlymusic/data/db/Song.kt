@@ -7,9 +7,9 @@ import java.util.UUID
 
 @Entity
 data class Song(
-    @PrimaryKey val songId: UUID = UUID.randomUUID(),
+    @PrimaryKey val songId: String = UUID.randomUUID().toString(),
     val title: String,
     val uri: URI,
     val artworkUri: URI?,
-    val duration: Long
+    val duration: Long,
 )
