@@ -1,7 +1,6 @@
 package dev.crazo7924.onlymusic.features.player.ui
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -119,18 +118,19 @@ fun PlayerUI(
                     .padding(16.dp)
                     .align(Alignment.BottomCenter)
             ) {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-
+                        .padding(16.dp)
                 ) {
-                    Text((playerUiState.position).toTimeString())
+                    Text(
+                        (playerUiState.position).toTimeString(), modifier = Modifier.align(
+                            Alignment.CenterStart
+                        )
+                    )
                     Row(
-                        modifier = Modifier.align(Alignment.CenterVertically),
+                        modifier = Modifier.align(Alignment.Center),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
@@ -178,8 +178,12 @@ fun PlayerUI(
                         }
 
                     }
-                    Text((playerUiState.media?.mediaMetadata?.durationMs ?: 0L).toTimeString())
-
+                    Text(
+                        (playerUiState.media?.mediaMetadata?.durationMs ?: 0L).toTimeString(),
+                        modifier = Modifier.align(
+                            Alignment.CenterEnd
+                        )
+                    )
                 }
 
                 Slider(
