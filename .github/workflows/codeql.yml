@@ -30,7 +30,7 @@ jobs:
         - language: actions
           build-mode: none
         - language: java-kotlin
-          build-mode: none
+          build-mode: manual
           
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
     steps:
@@ -39,12 +39,7 @@ jobs:
 
     - name: Clean project
       if: matrix.language == 'java-kotlin'
-      run: ./gradlew clean
-
-    - name: Build app
-      if: matrix.language == 'java-kotlin'
-      run: ./gradlew :app:assemble # be explicit about app module
-
+      run: ./gradlew -x test --no-daemon --no-build-cache --rerun-tasks clean :app:assemble
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
