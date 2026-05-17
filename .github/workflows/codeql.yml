@@ -30,11 +30,18 @@ jobs:
         - language: actions
           build-mode: none
         - language: java-kotlin
-          build-mode: autobuild
+          build-mode: none
+          
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Clean project
+      run: ./gradlew clean
+
+    - name: Build app
+      run: ./gradlew :app:assemble # be explicit about app module
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
