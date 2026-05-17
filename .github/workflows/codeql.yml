@@ -38,9 +38,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Clean project
+      if: matrix.language == 'java-kotlin'
       run: ./gradlew clean
 
     - name: Build app
+      if: matrix.language == 'java-kotlin'
       run: ./gradlew :app:assemble # be explicit about app module
 
     # Initializes the CodeQL tools for scanning.
