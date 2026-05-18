@@ -6,8 +6,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.animateContentSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -72,16 +75,26 @@ fun MainScreen(
         sheetContent = {
             AnimatedVisibility(
                 visible = !isExpanded,
-                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                enter = slideInVertically(
+                    animationSpec = tween(durationMillis = 400),
+                    initialOffsetY = { it }
+                ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+                exit = slideOutVertically(
+                    animationSpec = tween(durationMillis = 400),
+                    targetOffsetY = { it }
+                ) + fadeOut(animationSpec = tween(durationMillis = 400))
             ) {
                 ListItem(
-                    modifier = Modifier.clickable(
-                        onClick = {
-                            scope.launch {
-                                scaffoldState.bottomSheetState.expand()
+                    modifier = Modifier
+                        .clickable(
+                            onClick = {
+                                scope.launch {
+                                    scaffoldState.bottomSheetState.expand()
+                                }
                             }
-                        }), headlineContent = {
+                        )
+                        .animateContentSize(),
+                    headlineContent = {
                         if (playerUiState.media == null) Text("Nothing is playing")
                         else Text(
                             text = playerUiState.media?.mediaMetadata?.title?.toString()
@@ -144,10 +157,17 @@ fun MainScreen(
 
             AnimatedVisibility(
                 visible = isExpanded,
-                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                enter = slideInVertically(
+                    animationSpec = tween(durationMillis = 400),
+                    initialOffsetY = { -it }
+                ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+                exit = slideOutVertically(
+                    animationSpec = tween(durationMillis = 400),
+                    targetOffsetY = { -it }
+                ) + fadeOut(animationSpec = tween(durationMillis = 400))
             ) {
                 VerticalPager(
+                    modifier = Modifier.animateContentSize(),
                     state = pagerState,
                 ) { page ->
                     when (page) {
