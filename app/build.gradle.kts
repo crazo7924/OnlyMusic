@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.compose.material3)
