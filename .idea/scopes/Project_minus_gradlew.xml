@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Project minus gradlew" pattern="!file:gradlew&amp;&amp;!file:gradlew.bat&amp;&amp;!file:gradle//*&amp;&amp;file:*//*" />
+</component>

@@ -1,0 +1,6 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="SPDX-License-Identifier: AGPL-3.0-or-later&#10;SPDX-FileCopyrightText: #if(&amp;#36;original.year)&amp;#36;original.year#if(&amp;#36;original.year != &amp;#36;today.year)-&amp;#36;today.year#end#else&amp;#36;today.year#end Bharat Dev Burman" />
+    <option name="myName" value="spdx-agplv3-or-later" />
+  </copyright>
+</component>
