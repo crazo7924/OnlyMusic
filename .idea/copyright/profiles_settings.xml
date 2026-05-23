@@ -1,0 +1,7 @@
+<component name="CopyrightManager">
+  <settings default="spdx-agplv3-or-later">
+    <module2copyright>
+      <element module="Project minus gradlew" copyright="spdx-agplv3-or-later" />
+    </module2copyright>
+  </settings>
+</component>

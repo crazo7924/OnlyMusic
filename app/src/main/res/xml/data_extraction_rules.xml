@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: AGPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+  -->
+
+<!--
    Sample data extraction rules file; uncomment and customize as necessary.
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
    for details.

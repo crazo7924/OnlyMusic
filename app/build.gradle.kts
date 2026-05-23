@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 import com.android.build.api.dsl.ApplicationExtension
 
 plugins {

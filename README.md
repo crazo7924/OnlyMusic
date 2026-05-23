@@ -42,4 +42,4 @@ If you'd like to contribute:
 - Jetpack Compose — for making beautiful UI development on Android so much easier.
 
 ## License
-This project is available under the GNU GPLv3 License. See the LICENSE file for details.
+This project is available under the GNU Affero GPL v3.0 or later License. See the LICENSE file for details.
