@@ -69,7 +69,7 @@ fun SearchUI(
             query = searchUiState.query,
             onQueryChange = onSearchQueryUpdated,
             onSearch = onSearch,
-            iconDescription = "Search",
+            placeholder = stringResource(R.string.search_bar_placeholder)
         )
     }) { innerPadding ->
 

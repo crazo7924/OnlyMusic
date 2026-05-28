@@ -5,10 +5,12 @@
 
 package dev.crazo7924.onlymusic.features.search.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +36,6 @@ import dev.crazo7924.onlymusic.features.search.R.string
 fun TopSearchBar(
     modifier: Modifier = Modifier,
     placeholder: String,
-    iconDescription: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     query: String,
@@ -46,9 +47,20 @@ fun TopSearchBar(
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
                 singleLine = true,
                 suffix = {
+                    if(query.isEmpty())
                     Icon(
-                        imageVector = Icons.Outlined.Search, contentDescription = iconDescription
+                        imageVector = Icons.Outlined.Search, contentDescription = stringResource(
+                            string.search_bar_indicator_icon_description)
                     )
+                    else {
+                        Icon(
+                            imageVector = Icons.Outlined.Clear,
+                            contentDescription = stringResource(string.clear_search_query),
+                            modifier = Modifier.clickable {
+                                onQueryChange("")
+                            }
+                        )
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 value = query,
@@ -82,7 +94,6 @@ fun TopSearchBarPreview() {
         onQueryChange = { q = it;  },
         onSearch = {/* no-op */ },
         placeholder = "Search",
-        iconDescription = "Search Icon",
         query = q
     )
 }
