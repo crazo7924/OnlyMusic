@@ -27,14 +27,18 @@ import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +56,7 @@ import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerUiState
 import dev.crazo7924.onlymusic.features.player.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerUI(
     playerUiState: PlayerUiState,
@@ -128,6 +133,24 @@ fun PlayerUI(
                     .padding(16.dp)
                     .align(Alignment.BottomCenter)
             ) {
+                val duration = (playerUiState.media?.mediaMetadata?.durationMs ?: 0L).toFloat().coerceAtLeast(1f)
+                val sliderState = remember(duration) {
+                    SliderState(
+                        value = playerUiState.position.toFloat(),
+                        valueRange = 0F..duration
+                    ).apply {
+                        onValueChangeFinished = {
+                            onSeekTo(value)
+                        }
+                    }
+                }
+
+                LaunchedEffect(playerUiState.position, sliderState) {
+                    if (!sliderState.isDragging) {
+                        sliderState.value = playerUiState.position.toFloat()
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -135,7 +158,7 @@ fun PlayerUI(
                         .padding(16.dp)
                 ) {
                     Text(
-                        (playerUiState.position).toTimeString(), modifier = Modifier.align(
+                        sliderState.value.toLong().toTimeString(), modifier = Modifier.align(
                             Alignment.CenterStart
                         )
                     )
@@ -198,10 +221,7 @@ fun PlayerUI(
 
                 Slider(
                     modifier = Modifier.padding(16.dp),
-                    valueRange = 0F..(playerUiState.media?.mediaMetadata?.durationMs?.toFloat()
-                        ?: 1F),
-                    value = playerUiState.position.toFloat(),
-                    onValueChange = { onSeekTo(it) }
+                    state = sliderState
                 )
 
                 Box(
