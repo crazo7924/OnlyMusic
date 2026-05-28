@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: AGPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+  -->
+
+<resources>
+    <string name="queue_icon_description">Queue</string>
+    <string name="go_previous_icon_description">Skip to Previous</string>
+    <string name="toggle_playback_icon_description">Toggle playback</string>
+    <string name="go_next_icon_description">Skip to Next</string>
+    <string name="collapse_playerui_icon_description">Collapse the player</string>
+</resources>

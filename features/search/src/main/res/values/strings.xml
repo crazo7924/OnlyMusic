@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: AGPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+  -->
+
+<resources>
+    <string name="search_for_music_you_love">Search for music you love!</string>
+    <string name="search_bar_placeholder">Songs, artists, playlists…</string>
+    <string name="search_bar_indicator_icon_description">Search bar</string>
+    <string name="something_went_wrong">Something went wrong :(</string>
+    <string name="clear_search_query">Clear search query</string>
+</resources>

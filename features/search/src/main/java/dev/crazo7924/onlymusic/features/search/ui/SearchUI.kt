@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,8 +43,10 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import dev.crazo7924.onlymusic.core.R as commonR
 import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
+import dev.crazo7924.onlymusic.features.search.R
 import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
 
@@ -66,7 +69,6 @@ fun SearchUI(
             query = searchUiState.query,
             onQueryChange = onSearchQueryUpdated,
             onSearch = onSearch,
-            placeholder = "OnlyMusic",
             iconDescription = "Search",
         )
     }) { innerPadding ->
@@ -79,7 +81,7 @@ fun SearchUI(
                     .padding(innerPadding)
             ) {
                 Text(
-                    text = "Search for music you love!",
+                    text = stringResource(R.string.search_for_music_you_love),
                     textAlign = TextAlign.Center,
                     fontSize = MaterialTheme.typography.headlineSmall.fontSize
                 )
@@ -120,7 +122,7 @@ fun SearchUI(
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
-                    text = "Something went wrong :(", textAlign = TextAlign.Center
+                    text = stringResource(R.string.something_went_wrong), textAlign = TextAlign.Center
                 )
             }
 
@@ -179,14 +181,14 @@ fun SearchList(
                     )
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            text = mediaItems[index].title ?: "Unknown Title",
+                            text = mediaItems[index].title ?: stringResource(commonR.string.song_unknown_title),
                             maxLines = 1,
                             style = MaterialTheme.typography.titleMedium,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             modifier = Modifier.padding(top = 4.dp),
-                            text = mediaItems[index].artist ?: "Unknown Artist",
+                            text = mediaItems[index].artist ?: stringResource(commonR.string.song_unknown_artist),
                             style = MaterialTheme.typography.labelMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -200,13 +202,13 @@ fun SearchList(
                 onDismissRequest = { menuVisible = false },
             ) {
                 DropdownMenuItem(
-                    text = { Text("Enqueue") },
+                    text = { Text(stringResource(commonR.string.enqueue)) },
                     onClick = { onEnqueue(mediaItems[index]); menuVisible = false })
                 DropdownMenuItem(
-                    text = { Text("Enqueue Next") },
+                    text = { Text(stringResource(commonR.string.enqueue_next)) },
                     onClick = { onEnqueueNext(mediaItems[index]); menuVisible = false })
                 DropdownMenuItem(
-                    text = { Text("Enqueue Radio") },
+                    text = { Text(stringResource(commonR.string.enqueue_radio)) },
                     onClick = { onEnqueueRadio(mediaItems[index]); menuVisible = false })
             }
 

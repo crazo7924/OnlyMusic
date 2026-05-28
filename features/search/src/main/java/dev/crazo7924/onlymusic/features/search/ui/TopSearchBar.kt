@@ -23,9 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import dev.crazo7924.onlymusic.features.search.R.string
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,12 +73,13 @@ fun TopSearchBar(
 }
 
 
+@Suppress("AssignedValueIsNeverRead")
 @Preview(showSystemUi = true)
 @Composable
 fun TopSearchBarPreview() {
     var q: String by remember { mutableStateOf("") }
     TopSearchBar(
-        onQueryChange = { q = it },
+        onQueryChange = { q = it;  },
         onSearch = {/* no-op */ },
         placeholder = "Search",
         iconDescription = "Search Icon",

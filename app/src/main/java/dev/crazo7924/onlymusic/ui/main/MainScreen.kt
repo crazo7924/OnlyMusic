@@ -38,9 +38,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.crazo7924.onlymusic.MediaControllerManager
+import dev.crazo7924.onlymusic.R
+import dev.crazo7924.onlymusic.core.R as commonR
 import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerViewModel
@@ -100,16 +103,16 @@ fun MainScreen(
                         )
                         .animateContentSize(),
                     headlineContent = {
-                        if (playerUiState.media == null) Text("Nothing is playing")
+                        if (playerUiState.media == null) Text(stringResource(R.string.nothing_is_playing))
                         else Text(
                             text = playerUiState.media?.mediaMetadata?.title?.toString()
-                                ?: "Unknown Title"
+                                ?: stringResource(commonR.string.song_unknown_title)
                         )
                     }, supportingContent = {
                         if (playerUiState.media != null) {
                             Text(
                                 text = playerUiState.media?.mediaMetadata?.artist?.toString()
-                                    ?: "Unknown Artist"
+                                    ?: stringResource(commonR.string.song_unknown_artist)
                             )
                         }
                     }, leadingContent = {

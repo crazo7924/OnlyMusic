@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: AGPL-3.0-or-later
+  ~ SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+  -->
+
+<resources>
+    <string name="enqueue">Enqueue</string>
+    <string name="enqueue_next">Enqueue Next</string>
+    <string name="enqueue_radio">Enqueue Radio</string>
+    <string name="queue_icon_description">Queue</string>
+    <string name="song_unknown_artist">Unknown Artist</string>
+    <string name="song_unknown_title">Unknown Title</string>
+</resources>

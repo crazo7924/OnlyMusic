@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dev.crazo7924.onlymusic.core.MediaListItem
+import dev.crazo7924.onlymusic.core.R
 import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
 import org.schabi.newpipe.extractor.InfoItem
 
@@ -90,14 +92,14 @@ fun QueueList(
                 )
                 Column(modifier = Modifier.padding(8.dp)) {
                     Text(
-                        text = mediaItems[index].title ?: "Unknown Title",
+                        text = mediaItems[index].title ?: stringResource(R.string.song_unknown_title),
                         maxLines = 1,
                         style = MaterialTheme.typography.titleMedium,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         modifier = Modifier.padding(top = 4.dp),
-                        text = mediaItems[index].artist ?: "Unknown Artist",
+                        text = mediaItems[index].artist ?: stringResource(R.string.song_unknown_artist),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -108,6 +110,7 @@ fun QueueList(
     }
 }
 
+// no translation of strings required for preview with dummy data
 @Preview(showBackground = true)
 @Composable
 private fun QueuePreview() {

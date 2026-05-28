@@ -42,12 +42,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.crazo7924.onlymusic.core.R as commonR
 import dev.crazo7924.onlymusic.core.ui.components.forwardingPainter
 import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerUiState
+import dev.crazo7924.onlymusic.features.player.R
 
 @Composable
 fun PlayerUI(
@@ -70,19 +73,19 @@ fun PlayerUI(
                 IconButton(onClick = onCollapse) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Collapse the player",
+                        contentDescription = stringResource(R.string.collapse_playerui_icon_description),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Text(
                     text = playerUiState.media?.mediaMetadata?.artist?.toString()
-                        ?: "Unknown Artist",
+                        ?: stringResource(commonR.string.song_unknown_artist),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2
                 )
                 Text(
-                    text = playerUiState.media?.mediaMetadata?.title?.toString() ?: "Unknown Title",
+                    text = playerUiState.media?.mediaMetadata?.title?.toString() ?: stringResource(commonR.string.song_unknown_title),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 2
@@ -147,7 +150,7 @@ fun PlayerUI(
                             Icon(
                                 modifier = Modifier.fillMaxSize(),
                                 imageVector = Icons.Rounded.SkipPrevious,
-                                contentDescription = "Previous",
+                                contentDescription = stringResource(R.string.go_previous_icon_description),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -167,7 +170,7 @@ fun PlayerUI(
                             Icon(
                                 modifier = Modifier.fillMaxSize(),
                                 imageVector = icon,
-                                contentDescription = "Toggle playback",
+                                contentDescription = stringResource(R.string.toggle_playback_icon_description),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -179,7 +182,7 @@ fun PlayerUI(
                             Icon(
                                 modifier = Modifier.fillMaxSize(),
                                 imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = "Previous",
+                                contentDescription = stringResource(R.string.go_next_icon_description),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -212,7 +215,7 @@ fun PlayerUI(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Radio,
-                            contentDescription = "Enqueue Radio",
+                            contentDescription = stringResource(commonR.string.enqueue_radio),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -223,7 +226,7 @@ fun PlayerUI(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                            contentDescription = "Queue",
+                            contentDescription = stringResource(R.string.queue_icon_description),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
