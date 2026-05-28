@@ -29,6 +29,9 @@ jobs:
         
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
+      with:
+        # Override the default behavior to allow PR branches to save caches
+        cache-read-only: false
       
     - name: Build with Gradle
       run: ./gradlew assembleDebug
