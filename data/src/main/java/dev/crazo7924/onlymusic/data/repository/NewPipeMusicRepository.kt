@@ -65,7 +65,7 @@ class NewPipeMusicRepository : MusicRepository {
                                 artist = item.uploaderName.substringBefore(" - "),
                                 infoType = item.infoType,
                                 thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
-                                mediaUri = item.url,
+                                mediaUri = item.url, // not actual media uri so that search results show up quickly
                                 duration = item.duration
                             )
                         )
@@ -93,6 +93,8 @@ class NewPipeMusicRepository : MusicRepository {
                         TAG,
                         "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
                     )
+                    val mediaUri = (extractor.audioStreams.maxByOrNull { it.bitrate } ?: extractor.videoStreams.maxByOrNull { it.bitrate })?.content
+                    if (mediaUri == null) return@fold Result.failure(Exception("No playable streams found"))
                     Result.success(
                         MediaListItem(
                             id = extractor.url.substringAfter("?v="),
@@ -100,7 +102,7 @@ class NewPipeMusicRepository : MusicRepository {
                             artist = extractor.uploaderName.substringBefore(" - "),
                             infoType = InfoType.STREAM,
                             thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
-                            mediaUri = extractor.audioStreams.maxBy { audioStream -> audioStream.averageBitrate }.content,
+                            mediaUri = mediaUri,
                             duration = extractor.length * 1000L
                         )
                     )
