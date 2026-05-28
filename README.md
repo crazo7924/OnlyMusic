@@ -11,11 +11,20 @@ OnlyMusic is a modern music player with a beautiful, responsive UI built using J
 - Many more features planned — stay tuned!
 
 ## Screenshots
-TODO: Place screenshots here — add images from `/assets` or from a screenshot URL
+
+<p align="center">
+    <img src="assets/app.png" alt="Screenshot of app" />
+</p>
 
 ## Getting started
 
-Notes
+### Installation
+1. Clone this repository:
+2. Open the project in Android Studio (Ladybug or newer recommended).
+3. Sync the project with Gradle files.
+4. Run the app on an emulator or physical device.
+
+### Notes
 - The extractor library is provided by TeamNewPipe and distributed via JitPack. Please consult their repository or JitPack page for the most up-to-date artifact coordinates and licensing.
 - Playback implementation details (e.g., ExoPlayer) are internal — if you plan to extend playback, follow established Android media playback patterns.
 
@@ -42,4 +51,4 @@ If you'd like to contribute:
 - Jetpack Compose — for making beautiful UI development on Android so much easier.
 
 ## License
-This project is available under the GNU Affero GPL v3.0 or later License. See the LICENSE file for details.
+This project is licensed under the GNU Affero General Public License v3.0 or later License. See the LICENSE file for details.
