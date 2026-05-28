@@ -117,10 +117,12 @@ class NewPipeMusicRepository : MusicRepository {
     override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> = flow {
         val youtubeService = ServiceList.YouTube
         val initOutcome = runCatching { youtubeService.getPlaylistExtractor(uri) }
+        val playListExtractor = initOutcome.getOrElse {
+            emit(Result.failure(it))
+            return@flow
+        }
 
-        val playListExtractor = initOutcome.getOrNull()
-
-        val outcome = runCatching { playListExtractor?.fetchPage() }
+        val outcome = runCatching { playListExtractor.fetchPage() }
 
         outcome.onSuccess {
 
