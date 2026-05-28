@@ -4,7 +4,8 @@
  */
 
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.androidx.room)
     alias(libs.plugins.google.devtools.ksp)
 }
 
@@ -30,6 +31,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
