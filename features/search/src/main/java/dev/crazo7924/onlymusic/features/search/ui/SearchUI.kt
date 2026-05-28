@@ -65,7 +65,7 @@ fun SearchUI(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(all = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 16.dp),
             query = searchUiState.query,
             onQueryChange = onSearchQueryUpdated,
             onSearch = onSearch,
