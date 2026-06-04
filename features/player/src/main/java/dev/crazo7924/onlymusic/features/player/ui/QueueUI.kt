@@ -21,6 +21,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -38,7 +42,7 @@ import org.schabi.newpipe.extractor.InfoItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QueueUI(items: List<MediaListItem>, onItemClicked: (Int) -> Unit) {
+fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -50,6 +54,7 @@ fun QueueUI(items: List<MediaListItem>, onItemClicked: (Int) -> Unit) {
         QueueList(
             modifier = Modifier.padding(padding),
             mediaItems = items,
+            currentIndex = currentIndex,
             onItemClicked = { index ->
                 onItemClicked(index)
             },
@@ -61,16 +66,37 @@ fun QueueUI(items: List<MediaListItem>, onItemClicked: (Int) -> Unit) {
 fun QueueList(
     modifier: Modifier = Modifier,
     mediaItems: List<MediaListItem>,
+    currentIndex: Int,
     onItemClicked: (Int) -> Unit,
 ) {
 
     LazyColumn(modifier = modifier) {
         items(count = mediaItems.size) { index ->
+            val isPlaying = index == currentIndex
+            val isPlayed = index < currentIndex
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .clickable(onClick = { onItemClicked(index) }),
+                    .clickable(onClick = { onItemClicked(index) })
+                    .then(
+                        if (isPlaying) {
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .then(
+                        if (isPlayed) {
+                            Modifier.drawWithContent {
+                                drawContent()
+                                drawRect(Color.Gray.copy(alpha = 0.5f))
+                            }
+                        } else {
+                            Modifier
+                        }
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val intrinsicSize = with(LocalDensity.current) {
@@ -115,6 +141,7 @@ fun QueueList(
 @Composable
 private fun QueuePreview() {
     QueueUI(
+        currentIndex = 1,
         items = listOf(
             MediaListItem(
                 title = "Song 1",
