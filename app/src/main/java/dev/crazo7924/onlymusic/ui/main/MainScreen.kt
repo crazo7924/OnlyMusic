@@ -239,6 +239,7 @@ fun MainScreen(
                         1 -> {
                             QueueUI(
                                 items = playerUiState.queue.map { it.toMediaListItem() }, // Adapt based on actual item type
+                                currentIndex = playerUiState.currentMediaItemIndex,
                                 onItemClicked = { index ->
                                     Log.d(MainActivity.TAG, "Queue item clicked: index $index")
                                     val controller = mediaControllerManager.getController()
