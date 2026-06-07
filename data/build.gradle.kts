@@ -44,3 +44,16 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 }
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+android {
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+}
+dependencies {
+    testImplementation("org.robolectric:robolectric:4.11.1")
+}
