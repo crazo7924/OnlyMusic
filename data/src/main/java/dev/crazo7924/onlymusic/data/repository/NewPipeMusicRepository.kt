@@ -10,6 +10,9 @@ import androidx.core.net.toUri
 import dev.crazo7924.onlymusic.core.DownloaderImpl
 import dev.crazo7924.onlymusic.core.MediaListItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -126,8 +129,15 @@ class NewPipeMusicRepository : MusicRepository {
 
         outcome.onSuccess {
 
-            playListExtractor?.initialPage?.items?.forEach { item ->
-                emit(loadMediaUri(item.url))
+            playListExtractor?.initialPage?.items?.chunked(5)?.forEach { batch ->
+                coroutineScope {
+                    val deferredResults = batch.map { item ->
+                        async { loadMediaUri(item.url) }
+                    }
+                    deferredResults.awaitAll().forEach { result ->
+                        emit(result)
+                    }
+                }
             }
         }
 
@@ -159,8 +169,15 @@ class NewPipeMusicRepository : MusicRepository {
                 return@flow
             }
 
-            playListExtractor.initialPage.items.forEach { item ->
-                emit(loadMediaUri(item.url))
+            playListExtractor.initialPage.items.chunked(5).forEach { batch ->
+                coroutineScope {
+                    val deferredResults = batch.map { item ->
+                        async { loadMediaUri(item.url) }
+                    }
+                    deferredResults.awaitAll().forEach { result ->
+                        emit(result)
+                    }
+                }
             }
         }.flowOn(Dispatchers.IO)
 
