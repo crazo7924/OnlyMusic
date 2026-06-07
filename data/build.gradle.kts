@@ -38,6 +38,15 @@ room {
 }
 
 dependencies {
+    testImplementation(libs.junit4)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.robolectric)
+    androidTestImplementation(libs.androidx.junit.ktx)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.mockk.android)
+
     implementation(project(":core"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.room.runtime)
