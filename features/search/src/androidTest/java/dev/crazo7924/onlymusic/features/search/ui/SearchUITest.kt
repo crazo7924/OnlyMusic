@@ -1,6 +1,6 @@
 package dev.crazo7924.onlymusic.features.search.ui
 
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import dev.crazo7924.onlymusic.features.search.SearchState
@@ -27,7 +27,7 @@ class SearchUITest {
             )
         }
 
-        composeTestRule.onNodeWithText("Search for music you love").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Search for music you love!").assertIsDisplayed()
     }
 
     @Test
@@ -44,6 +44,6 @@ class SearchUITest {
             )
         }
 
-        composeTestRule.onNodeWithText("Something went wrong").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Something went wrong :(").assertIsDisplayed()
     }
 }
