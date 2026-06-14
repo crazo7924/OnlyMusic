@@ -18,8 +18,8 @@ extensions.configure<ApplicationExtension>("android") {
     defaultConfig {
         applicationId = "dev.crazo7924.onlymusic"
         minSdk = 26
-        versionCode = 10
-        versionName = "0.6.0"
+        versionCode = 12
+        versionName = "0.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
