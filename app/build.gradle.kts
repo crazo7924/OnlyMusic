@@ -13,12 +13,11 @@ plugins {
 
 extensions.configure<ApplicationExtension>("android") {
     namespace = "dev.crazo7924.onlymusic"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "dev.crazo7924.onlymusic"
         minSdk = 26
-        targetSdk = 36
         versionCode = 10
         versionName = "0.6.0"
 
@@ -48,13 +47,23 @@ extensions.configure<ApplicationExtension>("android") {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            // workaround for error "6 files found with path 'META-INF/LICENSE*.md'"
+            pickFirsts.add("META-INF/LICENSE.md")
+            pickFirsts.add("META-INF/LICENSE-notice.md")
+        }
+    }
+
+
 
     testOptions {
         unitTests {
