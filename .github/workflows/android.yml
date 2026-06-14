@@ -1,71 +1,71 @@
-name: Android CI
+name: Build & Release
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
   push:
     tags:
       - '*'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
       actions: read
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v4
     
     - name: set up JDK 21
       uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'temurin'
+        cache: 'gradle'
         
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
         # Override the default behavior to allow PR branches to save caches
         cache-read-only: false
-      
-    - name: Build with Gradle
+
+    - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Upload debug APK
-      if: success() && github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@v6
-      with:
-        name: debug-apk
-        path: |
-          app/build/outputs/apk/**/debug/*.apk
-          **/build/outputs/apk/**/debug/*.apk
-
-    - name: Extract package name and prepare APK
-      if: success() && startsWith(github.ref, 'refs/tags/')
+    - name: Prepare APK Info
       id: apk_info
       run: |
-        # Extract package name from build.gradle.kts or build.gradle
-        PACKAGE_NAME=$(grep -oP "applicationId\s*=\s*['\"]?\K[^'\"]*" app/build.gradle.kts || grep -oP "applicationId\s+['\"]?\K[^'\"]*" app/build.gradle || echo "com.example.app")
-        TAG_NAME=${GITHUB_REF#refs/tags/}
+        # Extract version or tag name
+        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="debug-$(date +'%Y%m%d%H%M')"
+        fi
         
-        # Find APK and rename it
-        APK_PATH=$(find app/build/outputs/apk -name "*debug.apk" | head -1)
+        # Extract package name
+        PACKAGE_NAME=$(grep -oP "applicationId\s*=\s*['\"]?\K[^'\"]*" app/build.gradle.kts || echo "dev.crazo7924.onlymusic")
+        
+        # Find and rename the APK
+        APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
         if [ ! -z "$APK_PATH" ]; then
-          NEW_NAME="${PACKAGE_NAME}_${TAG_NAME}-debug.apk"
-          mv "$APK_PATH" "app/build/outputs/apk/$NEW_NAME"
-          echo "apk_path=app/build/outputs/apk/$NEW_NAME" >> $GITHUB_OUTPUT
+          NEW_NAME="${PACKAGE_NAME}_${VERSION}.apk"
+          cp "$APK_PATH" "$NEW_NAME"
+          echo "apk_path=$NEW_NAME" >> $GITHUB_OUTPUT
           echo "apk_name=$NEW_NAME" >> $GITHUB_OUTPUT
         fi
 
+    - name: Upload debug APK
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ steps.apk_info.outputs.apk_name }}
+        path: ${{ steps.apk_info.outputs.apk_path }}
+
     - name: Create Release
-      if: success() && startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v3
       with:
         files: ${{ steps.apk_info.outputs.apk_path }}
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
