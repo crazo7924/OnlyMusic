@@ -15,18 +15,19 @@ import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
-import java.util.stream.Collectors
 
 // source: https://github.com/TeamNewPipe/NewPipe/blob/7cecda5713c3a9c493f7fbc0bc74f61483954a95/app/src/main/java/org/schabi/newpipe/DownloaderImpl.java
 object DownloaderImpl : Downloader() {
 
-    private val mCookies: MutableMap<String, String> = HashMap<String, String>().apply {
+    // Cookies are constant, precompute the string to avoid unnecessary allocations and iteration
+    private val precomputedCookies = buildString {
         // Recaptcha cookie is always added
         // TODO: not sure if this is necessary
-        set(RECAPTCHA_COOKIES_KEY, "")
-        set(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY, YOUTUBE_RESTRICTED_MODE_COOKIE)
+        append(RECAPTCHA_COOKIES_KEY).append("=")
+        append("; ")
+        append(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY).append("=").append(YOUTUBE_RESTRICTED_MODE_COOKIE)
     }
+
     private val client: OkHttpClient = OkHttpClient.Builder()
         .retryOnConnectionFailure(true)
         .readTimeout(
@@ -35,9 +36,7 @@ object DownloaderImpl : Downloader() {
         ).build()
 
     private fun getCookies(): String {
-        return mCookies.entries.stream()
-            .map { "$it.key=$it.value" }
-            .collect(Collectors.joining("; "))
+        return precomputedCookies
     }
 
     /**
@@ -80,14 +79,14 @@ object DownloaderImpl : Downloader() {
             requestBuilder.addHeader("Cookie", cookies)
         }
 
-        headers.forEach { (headerName: String, headerValueList: MutableList<String>) ->
+        for ((headerName, headerValueList) in headers) {
             requestBuilder.removeHeader(headerName)
-            headerValueList.forEach(Consumer { headerValue: String ->
+            for (i in 0 until headerValueList.size) {
                 requestBuilder.addHeader(
                     headerName,
-                    headerValue
+                    headerValueList[i]
                 )
-            })
+            }
         }
 
         client.newCall(requestBuilder.build()).execute().use { response ->
