@@ -13,5 +13,6 @@ interface MusicRepository {
     suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>>
 
     suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>>
+    suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>>
     suspend fun search(query: String): Flow<Result<MediaListItem>>
 }

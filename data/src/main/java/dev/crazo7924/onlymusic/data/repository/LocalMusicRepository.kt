@@ -36,6 +36,15 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
         ))
         }.flowOn(Dispatchers.IO)
 
+    override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
+        flow<Result<MediaListItem>> {
+            emit(
+                Result.failure(
+                    Exception("App is in offline mode")
+                )
+            )
+        }.flowOn(Dispatchers.IO)
+
     override suspend fun search(query: String): Flow<Result<MediaListItem>> =
         flow<Result<MediaListItem>> {
             playlistDao.getLikedSongs()?.songs?.forEach {

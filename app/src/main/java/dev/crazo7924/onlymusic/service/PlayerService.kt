@@ -58,6 +58,9 @@ class PlayerService : MediaSessionService() {
         val COMMAND_ENQUEUE_RADIO =
             SessionCommand("dev.crazo7924.onlymusic.player.START_RADIO", Bundle.EMPTY)
 
+        val COMMAND_LOAD_MORE_QUEUE =
+            SessionCommand("dev.crazo7924.onlymusic.player.LOAD_MORE_QUEUE", Bundle.EMPTY)
+
         // Keys for Bundle arguments
         const val KEY_URI = "KEY_URI"
         const val KEY_PLAYLIST_URI = "KEY_PLAYLIST_URI"
@@ -148,6 +151,34 @@ class PlayerService : MediaSessionService() {
     }
 
     private inner class PlayerMediaSessionCallback : MediaSession.Callback {
+
+        private var isFetchingMore = false
+
+        fun processLoadMoreQueue() {
+            if (isFetchingMore) return
+            isFetchingMore = true
+            serviceScope.launch {
+                Log.d(TAG, "Fetching more items for queue...")
+                val resultFlow = musicRepository.loadMorePlaylistItems()
+                var addedCount = 0
+                resultFlow.collect { result ->
+                    result.onSuccess { item ->
+                        withContext(Dispatchers.Main) {
+                            exoPlayer.addMediaItem(item.toMediaItem())
+                            addedCount++
+                        }
+                    }.onFailure { error ->
+                        Log.e(TAG, "Error fetching more items: $error")
+                    }
+                }
+                if (addedCount > 0) {
+                    Log.d(TAG, "Added $addedCount more items to queue.")
+                } else {
+                    Log.d(TAG, "No more items to fetch.")
+                }
+                isFetchingMore = false
+            }
+        }
 
         fun processLoadStreamUri(uri: String, playWhenReady: Boolean) {
             serviceScope.launch {
@@ -283,6 +314,7 @@ class PlayerService : MediaSessionService() {
                 .add(COMMAND_ENQUEUE_PLAYLIST_URI)
                 .add(COMMAND_SEEK_TO_PERCENTAGE)
                 .add(COMMAND_ENQUEUE_RADIO)
+                .add(COMMAND_LOAD_MORE_QUEUE)
                 .build()
 
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -358,6 +390,11 @@ class PlayerService : MediaSessionService() {
                         processEnqueueRadio(mediaUri)
                         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                     }
+                }
+
+                COMMAND_LOAD_MORE_QUEUE -> {
+                    processLoadMoreQueue()
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
             }
             return Futures.immediateFuture(SessionResult(SessionError.ERROR_UNKNOWN)) // Or specific error

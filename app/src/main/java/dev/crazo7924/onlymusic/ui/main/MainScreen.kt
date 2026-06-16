@@ -245,6 +245,10 @@ fun MainScreen(
                                     val controller = mediaControllerManager.getController()
                                     controller?.seekToDefaultPosition(index)
                                     controller?.play() // Optional: start playing selected item
+                                },
+                                onLoadMore = {
+                                    val controller = mediaControllerManager.getController()
+                                    controller?.sendCustomCommand(PlayerService.COMMAND_LOAD_MORE_QUEUE, Bundle.EMPTY)
                                 })
                         }
                     }
