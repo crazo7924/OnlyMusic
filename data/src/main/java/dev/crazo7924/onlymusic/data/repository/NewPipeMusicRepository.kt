@@ -21,6 +21,9 @@ import org.schabi.newpipe.extractor.InfoItem.InfoType
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.ListExtractor
+import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMixPlaylistExtractor
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMusicSearchExtractor
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubePlaylistLinkHandlerFactory
@@ -29,6 +32,9 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 class NewPipeMusicRepository : MusicRepository {
+
+    private var currentExtractor: ListExtractor<out InfoItem>? = null
+    private var currentPage: ListExtractor.InfoItemsPage<out InfoItem>? = null
 
     init {
         NewPipe.init(DownloaderImpl)
@@ -128,6 +134,8 @@ class NewPipeMusicRepository : MusicRepository {
         val outcome = runCatching { playListExtractor.fetchPage() }
 
         outcome.onSuccess {
+            currentExtractor = playListExtractor
+            currentPage = playListExtractor.initialPage
 
             playListExtractor?.initialPage?.items?.chunked(5)?.forEach { batch ->
                 coroutineScope {
@@ -169,7 +177,37 @@ class NewPipeMusicRepository : MusicRepository {
                 return@flow
             }
 
+            currentExtractor = playListExtractor
+            currentPage = playListExtractor.initialPage
+
             playListExtractor.initialPage.items.chunked(5).forEach { batch ->
+                coroutineScope {
+                    val deferredResults = batch.map { item ->
+                        async { loadMediaUri(item.url) }
+                    }
+                    deferredResults.awaitAll().forEach { result ->
+                        emit(result)
+                    }
+                }
+            }
+        }.flowOn(Dispatchers.IO)
+
+    override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
+        flow {
+            val extractor = currentExtractor ?: return@flow
+            val page = currentPage ?: return@flow
+
+            if (!page.hasNextPage()) return@flow
+
+            val outcome = runCatching { extractor.getPage(page.nextPage) }
+            val nextPage = outcome.getOrElse {
+                it.printStackTrace()
+                return@flow
+            }
+
+            currentPage = nextPage
+
+            nextPage.items.chunked(5).forEach { batch ->
                 coroutineScope {
                     val deferredResults = batch.map { item ->
                         async { loadMediaUri(item.url) }

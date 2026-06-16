@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.border
@@ -42,7 +46,7 @@ import org.schabi.newpipe.extractor.InfoItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) -> Unit) {
+fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) -> Unit, onLoadMore: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,6 +62,7 @@ fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) 
             onItemClicked = { index ->
                 onItemClicked(index)
             },
+            onLoadMore = onLoadMore
         )
     }
 }
@@ -68,9 +73,25 @@ fun QueueList(
     mediaItems: List<MediaListItem>,
     currentIndex: Int,
     onItemClicked: (Int) -> Unit,
+    onLoadMore: () -> Unit = {}
 ) {
+    val listState = rememberLazyListState()
 
-    LazyColumn(modifier = modifier) {
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            val totalItemsCount = listState.layoutInfo.totalItemsCount
+            lastVisibleItemIndex != null && lastVisibleItemIndex >= totalItemsCount - 5
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value) {
+            onLoadMore()
+        }
+    }
+
+    LazyColumn(modifier = modifier, state = listState) {
         items(count = mediaItems.size) { index ->
             val isPlaying = index == currentIndex
             val isPlayed = index < currentIndex
