@@ -5,11 +5,12 @@
 
 package dev.crazo7924.onlymusic.features.player.ui
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,11 +26,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -99,20 +100,14 @@ fun QueueList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .heightIn(min = 64.dp)
+                    .animateContentSize()
                     .clickable(onClick = { onItemClicked(index) })
-                    .then(
-                        if (isPlaying) {
-                            Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-                        } else {
-                            Modifier
-                        }
-                    )
                     .then(
                         if (isPlayed) {
                             Modifier.drawWithContent {
                                 drawContent()
-                                drawRect(Color.Gray.copy(alpha = 0.5f))
+                                drawRect(Color.Gray.copy(alpha = 0.4f))
                             }
                         } else {
                             Modifier
@@ -127,7 +122,9 @@ fun QueueList(
                 val icon = iconForInfoType(mediaItems[index].infoType, intrinsicSize)
 
                 AsyncImage(
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier
+                        .size(if (isPlaying) 80.dp else 64.dp)
+                        .clip(CenteredSquareShape),
                     model = ImageRequest.Builder(
                         LocalContext.current
                     ).crossfade(true).data(mediaItems[index].thumbnailUri).build(),
@@ -135,6 +132,7 @@ fun QueueList(
                     error = icon,
                     placeholder = icon,
                     fallback = icon,
+                    contentScale = ContentScale.Crop,
                     clipToBounds = true
                 )
                 Column(modifier = Modifier.padding(8.dp)) {
