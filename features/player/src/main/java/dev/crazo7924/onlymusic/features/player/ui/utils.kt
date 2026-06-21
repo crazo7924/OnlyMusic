@@ -5,9 +5,7 @@
 
 package dev.crazo7924.onlymusic.features.player.ui
 
-import android.util.Log
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
@@ -46,18 +44,16 @@ internal val CenteredSquareShape: Shape = object : Shape {
         density: Density,
     ): Outline {
 
-        Log.d(TAG, "size: $size")
         val minSide = minOf(size.width, size.height)
         val maxSide = maxOf(size.width, size.height)
-        val rect = RoundRect(
+        val rect = Rect(
             (maxSide - minSide) / 2,
             0F,
             (maxSide - minSide) / 2 + minSide,
-            minSide,
-            cornerRadius = CornerRadius(16f)
+            minSide
         )
-        Log.d(TAG, "rect: $rect")
-        return Outline.Rounded(rect)
+
+        return Outline.Rectangle(rect)
     }
 
     override fun toString(): String = TAG

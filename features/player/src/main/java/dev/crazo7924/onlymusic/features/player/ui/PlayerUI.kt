@@ -124,6 +124,7 @@ fun PlayerUI(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(CenteredSquareShape)
+                            .clip(RoundedCornerShape(16.dp))
                     )
                 }
             }
