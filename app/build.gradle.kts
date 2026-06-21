@@ -53,6 +53,7 @@ extensions.configure<ApplicationExtension>("android") {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -108,6 +109,9 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    implementation(libs.acra.core)
+    implementation(libs.acra.dialog)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 

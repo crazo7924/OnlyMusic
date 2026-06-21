@@ -26,6 +26,7 @@ newpipeExtractor = "v0.26.2"
 
 # Tooling
 desugarJdkLibs = "2.1.5"
+acra = "5.13.1"
 
 # Testing
 junit4 = "4.13.2"
@@ -84,6 +85,10 @@ androidx-core-testing = { group = "androidx.arch.core", name = "core-testing", v
 # Testing - Instrumentation
 androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxJunit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+
+# ACRA
+acra-core = { group = "ch.acra", name = "acra-core", version.ref = "acra" }
+acra-dialog = { group = "ch.acra", name = "acra-dialog", version.ref = "acra" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
