@@ -69,21 +69,28 @@ fun SearchUI(
             query = searchUiState.query,
             onQueryChange = onSearchQueryUpdated,
             onSearch = onSearch,
-            placeholder = stringResource(R.string.search_bar_placeholder)
+            placeholder = stringResource(commonR.string.app_name)
         )
     }) { innerPadding ->
 
         when (searchUiState.searchState) {
-            SearchState.INITIAL -> Box(
-                contentAlignment = Alignment.Center,
+            SearchState.INITIAL -> Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
                 Text(
-                    text = stringResource(R.string.search_for_music_you_love),
-                    textAlign = TextAlign.Center,
-                    fontSize = MaterialTheme.typography.headlineSmall.fontSize
+                    text = stringResource(R.string.recently_played),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                SearchList(
+                    modifier = Modifier.fillMaxSize(),
+                    mediaItems = searchUiState.recentSongs,
+                    onItemClicked = { onItemClicked(it) },
+                    onEnqueue = { onEnqueue(it) },
+                    onEnqueueNext = { onEnqueueNext(it) },
+                    onEnqueueRadio = { onEnqueueRadio(it) }
                 )
             }
 

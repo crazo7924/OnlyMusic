@@ -29,6 +29,7 @@ class SearchViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        coEvery { musicRepository.getRecentSongs() } returns flowOf(emptyList())
         viewModel = SearchViewModel(musicRepository, minQueryLength = 2)
     }
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import java.net.URI
 
 class CachingMusicRepository(
@@ -49,8 +50,12 @@ class CachingMusicRepository(
             }
         }
 
-        playlistDao.getRecentSongs()?.songs?.forEach {
-            emit(Result.success(it.toMediaListItem()))
-        }
     }.flowOn(Dispatchers.IO)
+
+    override fun getRecentSongs(): Flow<List<MediaListItem>> {
+        return playlistDao.getRecentSongsFlow()
+            .map { playlist ->
+                playlist?.songs?.map { it.toMediaListItem() } ?: emptyList()
+            }
+    }
 }
