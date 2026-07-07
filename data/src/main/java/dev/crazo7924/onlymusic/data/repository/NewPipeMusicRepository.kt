@@ -192,6 +192,10 @@ class NewPipeMusicRepository : MusicRepository {
             }
         }.flowOn(Dispatchers.IO)
 
+    override fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
+        emit(emptyList()) // NewPipe repository doesn't have a concept of local recent songs
+    }
+
     override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
         flow {
             val extractor = currentExtractor ?: return@flow

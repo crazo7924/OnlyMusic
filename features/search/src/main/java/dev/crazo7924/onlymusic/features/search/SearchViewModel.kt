@@ -29,10 +29,18 @@ class SearchViewModel(
     )
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            musicRepository.getRecentSongs().collect { songs ->
+                _uiState.update { it.copy(recentSongs = songs) }
+            }
+        }
+    }
+
     fun updateQueryFrom(updatedValue: String) {
-//        if (updatedValue.isBlank() || updatedValue.length < minQueryLength) {
-//            _uiState.update { it.copy(suggestions = listOf()) }
-//        }
+        if (updatedValue.isBlank()) {
+            _uiState.update { it.copy(suggestions = listOf(), searchState = SearchState.INITIAL) }
+        }
         _uiState.update { it.copy(query = updatedValue) }
     }
 

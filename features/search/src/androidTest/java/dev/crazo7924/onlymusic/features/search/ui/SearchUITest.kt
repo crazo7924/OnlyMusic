@@ -27,7 +27,7 @@ class SearchUITest {
             )
         }
 
-        composeTestRule.onNodeWithText("Search for music you love!").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Recently played").assertIsDisplayed()
     }
 
     @Test

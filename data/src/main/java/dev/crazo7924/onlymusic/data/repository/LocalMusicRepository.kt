@@ -51,4 +51,8 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
             Result.success(it.toMediaListItem())
             }
         }.flowOn(Dispatchers.IO)
+
+    override fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
+        emit(emptyList()) // Or implement if needed, although local repo is unused
+    }
 }

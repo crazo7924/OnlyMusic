@@ -37,7 +37,7 @@ class CachingMusicRepositoryTest {
     }
 
     @Test
-    fun `search caches results from remote and appends local recent songs`() = runTest {
+    fun `search caches results from remote without appending local recent songs`() = runTest {
         val query = "test query"
         val remoteItem = MediaListItem(id = "1", title = "Remote Song", artist = "Artist", infoType = InfoItem.InfoType.STREAM, duration = 1000L, thumbnailUri = "http://thumb", mediaUri = "http://media")
 
@@ -47,23 +47,12 @@ class CachingMusicRepositoryTest {
         val recentPlaylistId = UUID.randomUUID().toString()
         every { playlistDao.getRecentPlaylistId() } returns recentPlaylistId
 
-        // Mock local recent songs
-        val localSong = Song(songId = "2", title = "Local Song", duration = 2000L, uri = URI("http://local"), artworkUri = null)
-        val songWithArtists = SongWithArtists(song = localSong, artists = emptyList())
-        val playlistWithSongs = PlaylistWithSongs(
-            playlist = Playlist(playlistId = UUID.randomUUID(), name = "recent", uri = null, playlistType = PlaylistType.INTERNAL),
-            songs = listOf(songWithArtists)
-        )
-        every { playlistDao.getRecentSongs() } returns playlistWithSongs
-
         // Execute search and collect results
         val results = repository.search(query).toList()
 
-        // Verify we got the remote item and then the local item
-        assertEquals(2, results.size)
+        // Verify we got the remote item
+        assertEquals(1, results.size)
         assertEquals(remoteItem, results[0].getOrNull())
-        assertEquals("2", results[1].getOrNull()?.id)
-        assertEquals("Local Song", results[1].getOrNull()?.title)
 
         // Verify caching operations happened
         coVerify { songDao.insertSong(any()) }
