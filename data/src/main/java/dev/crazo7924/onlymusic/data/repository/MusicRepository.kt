@@ -15,5 +15,5 @@ interface MusicRepository {
     suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>>
     suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>>
     suspend fun search(query: String): Flow<Result<MediaListItem>>
-    fun getRecentSongs(): Flow<List<MediaListItem>>
+    suspend fun getRecentSongs(): Flow<List<MediaListItem>>
 }

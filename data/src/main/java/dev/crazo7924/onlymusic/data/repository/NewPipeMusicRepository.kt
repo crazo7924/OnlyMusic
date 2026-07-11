@@ -17,13 +17,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.InfoItem.InfoType
+import org.schabi.newpipe.extractor.ListExtractor
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ListExtractor
-import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMixPlaylistExtractor
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMusicSearchExtractor
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubePlaylistLinkHandlerFactory
@@ -192,7 +191,7 @@ class NewPipeMusicRepository : MusicRepository {
             }
         }.flowOn(Dispatchers.IO)
 
-    override fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
+    override suspend fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
         emit(emptyList()) // NewPipe repository doesn't have a concept of local recent songs
     }
 

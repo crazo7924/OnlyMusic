@@ -5,17 +5,18 @@
 
 package dev.crazo7924.onlymusic.data.repository
 
+import android.util.Log
 import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistSongsCrossRef
 import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongDao
+import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import dev.crazo7924.onlymusic.data.toMediaListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import java.net.URI
 
 class CachingMusicRepository(
@@ -27,6 +28,8 @@ class CachingMusicRepository(
     override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
 
         val remoteResults = remoteRepository.search(query)
+
+        val recentPlaylistId = playlistDao.getRecentPlaylistId()
 
         remoteResults.collect { result ->
             emit(result)
@@ -40,8 +43,6 @@ class CachingMusicRepository(
                 )
                 songDao.insertSong(song)
 
-                val recentPlaylistId = playlistDao.getRecentPlaylistId()
-
                 playlistDao.insertSongToPlaylist(
                     PlaylistSongsCrossRef(
                         playlistId = recentPlaylistId, songId = song.songId
@@ -52,10 +53,18 @@ class CachingMusicRepository(
 
     }.flowOn(Dispatchers.IO)
 
-    override fun getRecentSongs(): Flow<List<MediaListItem>> {
-        return playlistDao.getRecentSongsFlow()
-            .map { playlist ->
-                playlist?.songs?.map { it.toMediaListItem() } ?: emptyList()
-            }
+
+    override suspend fun getRecentSongs(): Flow<List<MediaListItem>> {
+        Log.d(TAG, "getRecentSongs: about to fetch")
+        return flow {
+            val songs =
+                playlistDao.getRecentSongs()?.songs?.map { it.toMediaListItem() } ?: emptyList()
+            Log.d(TAG, "getRecentSongs: ${songs.size} found")
+            emit(songs) // Correctly emit the fetched songs
+        }.flowOn(Dispatchers.IO)
+    }
+
+    companion object {
+        private const val TAG: String = "CachingMusicRepository"
     }
 }
