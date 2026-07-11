@@ -1,14 +1,12 @@
 package dev.crazo7924.onlymusic
 
 import android.os.Bundle
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.media3.session.SessionCommand
-import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.features.player.PlayerUiState
 import dev.crazo7924.onlymusic.features.player.PlayerViewModel
 import dev.crazo7924.onlymusic.features.search.SearchUiState
@@ -21,7 +19,6 @@ import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
-import org.schabi.newpipe.extractor.InfoItem
 
 class QueuePaginationTest {
 
@@ -41,10 +38,12 @@ class QueuePaginationTest {
         val fakeQueue = (1..20).map {
             androidx.media3.common.MediaItem.Builder()
                 .setMediaId(it.toString())
-                .setMediaMetadata(androidx.media3.common.MediaMetadata.Builder()
-                    .setTitle("Song $it")
-                    .setArtist("Artist $it")
-                    .build())
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata.Builder()
+                        .setTitle("Song $it")
+                        .setArtist("Artist $it")
+                        .build()
+                )
                 .build()
         }
 

@@ -24,9 +24,9 @@ import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import dagger.hilt.android.AndroidEntryPoint
 import dev.crazo7924.onlymusic.core.toMediaItem
 import dev.crazo7924.onlymusic.data.repository.MusicRepository
-import dev.crazo7924.onlymusic.data.repository.NewPipeMusicRepository
 import dev.crazo7924.onlymusic.ui.main.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class PlayerService : MediaSessionService() {
 
     companion object {
@@ -74,7 +76,8 @@ class PlayerService : MediaSessionService() {
     }
 
     private lateinit var exoPlayer: ExoPlayer
-    private lateinit var musicRepository: MusicRepository
+    @Inject
+    lateinit var musicRepository: MusicRepository
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var mediaSession: MediaSession
     private lateinit var mediaSessionCallback: PlayerMediaSessionCallback
@@ -92,8 +95,6 @@ class PlayerService : MediaSessionService() {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
-
-        musicRepository = NewPipeMusicRepository() // Replace with DI if available
 
         mediaSessionCallback = PlayerMediaSessionCallback()
 

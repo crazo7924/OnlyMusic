@@ -5,6 +5,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.google.dagger.hilt.android)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.google.devtools.ksp)
 }
@@ -31,6 +32,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 room {
@@ -38,11 +43,8 @@ room {
 }
 
 dependencies {
-    testImplementation(libs.junit4)
     testImplementation(libs.mockk)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.core.testing)
-    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.mockk.android)
@@ -52,17 +54,11 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
-}
-dependencies {
-    testImplementation("junit:junit:4.13.2")
-    testImplementation(libs.kotlinx.coroutines.test)
-}
 
-android {
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
-}
-dependencies {
-    testImplementation("org.robolectric:robolectric:4.16.1")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }
