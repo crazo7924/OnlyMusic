@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.androidx.room) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.google.devtools.ksp) apply false
+    alias(libs.plugins.google.dagger.hilt.android) apply false
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply false
 
 }

@@ -11,16 +11,17 @@ import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistSongsCrossRef
 import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongDao
-import dev.crazo7924.onlymusic.data.db.SongWithArtists
+import dev.crazo7924.onlymusic.data.di.RemoteRepository
 import dev.crazo7924.onlymusic.data.toMediaListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.net.URI
+import javax.inject.Inject
 
-class CachingMusicRepository(
-    private val remoteRepository: MusicRepository,
+class CachingMusicRepository @Inject constructor(
+    @param:RemoteRepository private val remoteRepository: MusicRepository,
     private val playlistDao: PlaylistDao,
     private val songDao: SongDao,
 ) : MusicRepository by remoteRepository {

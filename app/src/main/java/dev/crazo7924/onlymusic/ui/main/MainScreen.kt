@@ -8,8 +8,8 @@ package dev.crazo7924.onlymusic.ui.main
 import android.os.Bundle
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.crazo7924.onlymusic.MediaControllerManager
 import dev.crazo7924.onlymusic.R
-import dev.crazo7924.onlymusic.core.R as commonR
 import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerViewModel
@@ -54,6 +53,7 @@ import dev.crazo7924.onlymusic.features.search.ui.SearchUI
 import dev.crazo7924.onlymusic.service.PlayerService
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.InfoItem
+import dev.crazo7924.onlymusic.core.R as commonR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,7 +248,10 @@ fun MainScreen(
                                 },
                                 onLoadMore = {
                                     val controller = mediaControllerManager.getController()
-                                    controller?.sendCustomCommand(PlayerService.COMMAND_LOAD_MORE_QUEUE, Bundle.EMPTY)
+                                    controller?.sendCustomCommand(
+                                        PlayerService.COMMAND_LOAD_MORE_QUEUE,
+                                        Bundle.EMPTY
+                                    )
                                 })
                         }
                     }

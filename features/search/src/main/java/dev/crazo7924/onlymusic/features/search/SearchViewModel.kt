@@ -7,18 +7,22 @@ package dev.crazo7924.onlymusic.features.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.crazo7924.onlymusic.data.repository.MusicRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class SearchViewModel(
+@HiltViewModel
+class SearchViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
-    val minQueryLength: Int = 2,
 ) :
     ViewModel() {
+
+    val minQueryLength: Int = 2
 
     private val _uiState = MutableStateFlow(
         SearchUiState(

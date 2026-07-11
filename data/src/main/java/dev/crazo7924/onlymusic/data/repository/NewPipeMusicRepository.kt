@@ -29,8 +29,9 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubePlaylist
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory.MUSIC_SONGS
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import javax.inject.Inject
 
-class NewPipeMusicRepository : MusicRepository {
+class NewPipeMusicRepository @Inject constructor() : MusicRepository {
 
     private var currentExtractor: ListExtractor<out InfoItem>? = null
     private var currentPage: ListExtractor.InfoItemsPage<out InfoItem>? = null
