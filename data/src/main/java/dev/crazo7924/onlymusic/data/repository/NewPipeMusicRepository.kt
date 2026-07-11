@@ -96,28 +96,29 @@ class NewPipeMusicRepository : MusicRepository {
             }
 
             return@withContext result.fold(
-                onSuccess = {
-                    Log.d(
-                        TAG,
-                        "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
-                    )
-                    val mediaUri = (extractor.audioStreams.maxByOrNull { it.bitrate } ?: extractor.videoStreams.maxByOrNull { it.bitrate })?.content
-                    if (mediaUri == null) return@fold Result.failure(Exception("No playable streams found"))
-                    Result.success(
-                        MediaListItem(
-                            id = extractor.url.substringAfter("?v="),
-                            title = extractor.name,
-                            artist = extractor.uploaderName.substringBefore(" - "),
-                            infoType = InfoType.STREAM,
-                            thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
-                            mediaUri = mediaUri,
-                            duration = extractor.length * 1000L
+                    onSuccess = {
+                        Log.d(
+                            TAG,
+                            "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
                         )
-                    )
-                },
-                onFailure = {
-                    Result.failure(it)
-                }
+                        val mediaUri = (extractor.audioStreams.maxByOrNull { it.bitrate }
+                            ?: extractor.videoStreams.maxByOrNull { it.bitrate })?.content
+                        if (mediaUri == null) return@fold Result.failure(Exception("No playable streams found"))
+                        Result.success(
+                            MediaListItem(
+                                id = extractor.url.substringAfter("?v="),
+                                title = extractor.name,
+                                artist = extractor.uploaderName.substringBefore(" - "),
+                                infoType = InfoType.STREAM,
+                                thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
+                                mediaUri = mediaUri,
+                                duration = extractor.length * 1000L
+                            )
+                        )
+                    },
+                    onFailure = {
+                        Result.failure(it)
+                    }
             )
         }
 
