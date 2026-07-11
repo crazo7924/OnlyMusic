@@ -10,7 +10,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 @Dao
@@ -23,10 +22,6 @@ interface PlaylistDao {
     @Query("Select * from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
     fun getRecentSongs(): PlaylistWithSongs?
 
-    @Transaction
-    @Query("Select * from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
-    fun getRecentSongsFlow(): Flow<PlaylistWithSongs?>
-
     @Query("Select playlistId from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
     fun getRecentPlaylistId(): String
 
@@ -35,7 +30,6 @@ interface PlaylistDao {
 
     @Query("Select * from Playlist where name = :name and playlistType = 'LOCAL'")
     fun findPlaylistsByName(name: String): List<Playlist>
-
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertSongToPlaylist(playlistSongsCrossRef: PlaylistSongsCrossRef)

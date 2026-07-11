@@ -52,7 +52,7 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
             }
         }.flowOn(Dispatchers.IO)
 
-    override fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
+    override suspend fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
         emit(emptyList()) // Or implement if needed, although local repo is unused
     }
 }
