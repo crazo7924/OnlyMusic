@@ -2,7 +2,7 @@ package dev.crazo7924.onlymusic
 
 import android.os.Bundle
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -71,8 +71,8 @@ class QueuePaginationTest {
 
         // Scroll to the end of the list to trigger load more
         composeTestRule.onNodeWithText("Song 1").performTouchInput { swipeUp() }
-        composeTestRule.onNodeWithText("Song 1").performTouchInput { swipeUp() }
-        composeTestRule.onNodeWithText("Song 1").performTouchInput { swipeUp() }
+        composeTestRule.onNodeWithText("Song 2").performTouchInput { swipeUp() }
+        composeTestRule.onNodeWithText("Song 3").performTouchInput { swipeUp() }
 
         // Verify the custom command was sent
         verify(timeout = 3000) {
