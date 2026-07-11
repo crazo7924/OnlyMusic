@@ -16,24 +16,26 @@ import kotlinx.coroutines.flow.flowOn
 class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicRepository {
     override suspend fun loadMediaUri(uri: String?): Result<MediaListItem> {
         return Result.failure(
-            Exception("App is in offline mode")
-        )
-    }
+                Exception("App is in offline mode")
+            )
+        }
 
     override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
         flow<Result<MediaListItem>> {
             emit(
                 Result.failure(
-            Exception("App is in offline mode")
-        ))
+                    Exception("App is in offline mode")
+                )
+            )
         }.flowOn(Dispatchers.IO)
 
     override suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
         flow<Result<MediaListItem>> {
             emit(
                 Result.failure(
-            Exception("App is in offline mode")
-        ))
+                    Exception("App is in offline mode")
+                )
+            )
         }.flowOn(Dispatchers.IO)
 
     override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
@@ -48,7 +50,7 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
     override suspend fun search(query: String): Flow<Result<MediaListItem>> =
         flow<Result<MediaListItem>> {
             playlistDao.getLikedSongs()?.songs?.forEach {
-            Result.success(it.toMediaListItem())
+                Result.success(it.toMediaListItem())
             }
         }.flowOn(Dispatchers.IO)
 
