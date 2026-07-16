@@ -14,19 +14,21 @@ import java.net.URI
 import java.util.UUID
 
 @Database(
-    version = 1,
+    version = 2,
     exportSchema = true,
     entities = [
         Playlist::class,
         Song::class,
         Artist::class,
-        PlaylistSongsCrossRef::class
+        PlaylistSongsCrossRef::class,
+        SongArtistCrossRef::class
     ]
 )
 @TypeConverters(Converters::class)
 abstract class OnlyMusicDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
     abstract fun songDao(): SongDao
+    abstract fun artistDao(): ArtistDao
 }
 
 val initPlaylistCallback = object : RoomDatabase.Callback() {
