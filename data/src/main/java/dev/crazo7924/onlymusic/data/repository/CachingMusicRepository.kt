@@ -7,9 +7,12 @@ package dev.crazo7924.onlymusic.data.repository
 
 import android.util.Log
 import dev.crazo7924.onlymusic.core.MediaListItem
+import dev.crazo7924.onlymusic.data.db.Artist
+import dev.crazo7924.onlymusic.data.db.ArtistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistSongsCrossRef
 import dev.crazo7924.onlymusic.data.db.Song
+import dev.crazo7924.onlymusic.data.db.SongArtistCrossRef
 import dev.crazo7924.onlymusic.data.db.SongDao
 import dev.crazo7924.onlymusic.data.di.RemoteRepository
 import dev.crazo7924.onlymusic.data.toMediaListItem
@@ -24,6 +27,7 @@ class CachingMusicRepository @Inject constructor(
     @param:RemoteRepository private val remoteRepository: MusicRepository,
     private val playlistDao: PlaylistDao,
     private val songDao: SongDao,
+    private val artistDao: ArtistDao,
 ) : MusicRepository by remoteRepository {
 
     override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
@@ -43,6 +47,20 @@ class CachingMusicRepository @Inject constructor(
                     duration = mediaListItem.duration ?: 0L
                 )
                 songDao.insertSong(song)
+
+                mediaListItem.artist?.let { artistName ->
+                    var artist = artistDao.getArtistByName(artistName)
+                    if (artist == null) {
+                        artist = Artist(name = artistName)
+                        artistDao.insertArtist(artist)
+                    }
+                    artistDao.insertSongArtistCrossRef(
+                        SongArtistCrossRef(
+                            songId = song.songId,
+                            artistId = artist.artistId
+                        )
+                    )
+                }
 
                 playlistDao.insertSongToPlaylist(
                     PlaylistSongsCrossRef(

@@ -8,6 +8,7 @@ import dev.crazo7924.onlymusic.data.db.PlaylistWithSongs
 import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import dev.crazo7924.onlymusic.data.db.SongDao
+import dev.crazo7924.onlymusic.data.db.ArtistDao
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -30,10 +31,11 @@ class CachingMusicRepositoryTest {
     private val remoteRepository: MusicRepository = mockk()
     private val playlistDao: PlaylistDao = mockk(relaxed = true)
     private val songDao: SongDao = mockk(relaxed = true)
+    private val artistDao: ArtistDao = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        repository = CachingMusicRepository(remoteRepository, playlistDao, songDao)
+        repository = CachingMusicRepository(remoteRepository, playlistDao, songDao, artistDao)
     }
 
     @Test
