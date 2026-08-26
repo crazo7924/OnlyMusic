@@ -15,3 +15,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply false
 
 }
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
+}
