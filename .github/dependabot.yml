@@ -7,4 +7,4 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "cron"
-      cronjob: "0 0 * * 2,5" # every Tuesday and Friday
+      cron: "0 0 * * 2,5" # every Tuesday and Friday
