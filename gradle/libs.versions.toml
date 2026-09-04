@@ -24,7 +24,7 @@ media3 = "1.10.1"
 hilt = "2.60.1"
 
 # Data & Networking
-coil = "3.5.0"
+coil = "3.6.0"
 newpipeExtractor = "v0.26.4"
 
 # Tooling
