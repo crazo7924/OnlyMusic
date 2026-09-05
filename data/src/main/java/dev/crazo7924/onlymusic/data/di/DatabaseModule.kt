@@ -19,7 +19,6 @@ import dev.crazo7924.onlymusic.data.db.OnlyMusicDatabase
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
 import dev.crazo7924.onlymusic.data.db.SongDao
-import dev.crazo7924.onlymusic.data.db.initPlaylistCallback
 import javax.inject.Singleton
 
 @Module
@@ -52,7 +51,6 @@ object DatabaseModule {
             context,
             OnlyMusicDatabase::class.java, "only-music-database"
         )
-            .addCallback(initPlaylistCallback)
             .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigration(dropAllTables = false)
             .build()

@@ -23,13 +23,16 @@ interface PlaylistDao {
     fun getRecentSongs(): PlaylistWithSongs?
 
     @Query("Select playlistId from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
-    fun getRecentPlaylistId(): String
+    fun getRecentPlaylistId(): String?
 
     @Query("Select playlistId from Playlist where name = 'liked' and playlistType = 'INTERNAL'")
-    fun getLikedPlaylistId(): String
+    fun getLikedPlaylistId(): String?
 
     @Query("Select * from Playlist where name = :name and playlistType = 'LOCAL'")
     fun findPlaylistsByName(name: String): List<Playlist>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertPlaylist(playlist: Playlist)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertSongToPlaylist(playlistSongsCrossRef: PlaylistSongsCrossRef)

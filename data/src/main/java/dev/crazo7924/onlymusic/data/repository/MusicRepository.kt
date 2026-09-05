@@ -21,4 +21,5 @@ interface MusicRepository {
     suspend fun getRecentQueries(): Flow<List<String>>
     suspend fun addRecentQuery(query: String)
     suspend fun deleteRecentQuery(query: String)
+    suspend fun saveToRecents(mediaListItem: MediaListItem)
 }

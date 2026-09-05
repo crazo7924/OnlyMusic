@@ -14,6 +14,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -26,15 +27,19 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import dev.crazo7924.onlymusic.core.toMediaItem
+import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.data.repository.MusicRepository
 import dev.crazo7924.onlymusic.ui.main.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class PlayerService : MediaSessionService() {
@@ -82,6 +87,45 @@ class PlayerService : MediaSessionService() {
     private lateinit var mediaSession: MediaSession
     private lateinit var mediaSessionCallback: PlayerMediaSessionCallback
 
+    private var recentJob: Job? = null
+    private var currentMediaItemForRecent: MediaItem? = null
+
+    private val playerListener = object : Player.Listener {
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            super.onMediaItemTransition(mediaItem, reason)
+            resetRecentTimer(mediaItem)
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            super.onIsPlayingChanged(isPlaying)
+            if (isPlaying) {
+                if (recentJob == null && exoPlayer.currentMediaItem != null && exoPlayer.currentMediaItem != currentMediaItemForRecent) {
+                    startRecentTimer(exoPlayer.currentMediaItem!!)
+                }
+            } else {
+                recentJob?.cancel()
+                recentJob = null
+            }
+        }
+    }
+
+    private fun resetRecentTimer(mediaItem: MediaItem?) {
+        recentJob?.cancel()
+        recentJob = null
+        currentMediaItemForRecent = null
+        if (mediaItem != null && exoPlayer.isPlaying) {
+            startRecentTimer(mediaItem)
+        }
+    }
+
+    private fun startRecentTimer(mediaItem: MediaItem) {
+        recentJob = serviceScope.launch {
+            delay(3000.milliseconds)
+            musicRepository.saveToRecents(mediaItem.toMediaListItem())
+            currentMediaItemForRecent = mediaItem
+        }
+    }
+
 
     override fun onCreate() {
         super.onCreate()
@@ -95,6 +139,8 @@ class PlayerService : MediaSessionService() {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
+
+        exoPlayer.addListener(playerListener)
 
         mediaSessionCallback = PlayerMediaSessionCallback()
 
@@ -146,6 +192,7 @@ class PlayerService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession.release()
+        exoPlayer.removeListener(playerListener)
         exoPlayer.release()
         serviceScope.cancel()
         super.onDestroy()
