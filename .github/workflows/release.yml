@@ -44,7 +44,14 @@ jobs:
             echo "apk_path=$NEW_NAME" >> $GITHUB_OUTPUT
             echo "apk_name=$NEW_NAME" >> $GITHUB_OUTPUT
           fi
+      - name: Upload APK for manual build 
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-apk
+          path: ${{ steps.apk_info.outputs.apk_path }}
       - name: Create Release
+        if: github.event_name != 'workflow_dispatch'
         uses: softprops/action-gh-release@v3
         with:
           files: ${{ steps.apk_info.outputs.apk_path }}
