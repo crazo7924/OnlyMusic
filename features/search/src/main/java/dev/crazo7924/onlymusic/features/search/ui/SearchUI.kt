@@ -59,6 +59,7 @@ fun SearchUI(
     onEnqueueNext: (MediaListItem) -> Unit,
     onSearch: () -> Unit,
     onSearchQueryUpdated: (String) -> Unit,
+    onQuerySelected: (String) -> Unit,
     onDeleteRecentQuery: (String) -> Unit = {},
 ) {
     Scaffold(topBar = {
@@ -73,14 +74,8 @@ fun SearchUI(
             placeholder = stringResource(commonR.string.app_name),
             recentQueries = searchUiState.recentQueries,
             querySuggestions = searchUiState.querySuggestions,
-            onRecentQuerySelected = { query ->
-                onSearchQueryUpdated(query)
-                onSearch()
-            },
-            onSuggestionSelected = { suggestion ->
-                onSearchQueryUpdated(suggestion)
-                onSearch()
-            },
+            onRecentQuerySelected = onQuerySelected,
+            onSuggestionSelected = onQuerySelected,
             onDeleteRecentQuery = onDeleteRecentQuery
         )
     }) { innerPadding ->
@@ -246,6 +241,7 @@ private fun SearchPreview() {
         onEnqueueNext = {},
         onSearch = {},
         onSearchQueryUpdated = {},
+        onQuerySelected = {},
         onEnqueueRadio = {},
     )
 }

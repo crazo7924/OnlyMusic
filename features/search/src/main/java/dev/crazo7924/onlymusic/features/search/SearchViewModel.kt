@@ -50,19 +50,18 @@ class SearchViewModel @Inject constructor(
 
     fun updateQueryFrom(updatedValue: String) {
         suggestionsJob?.cancel()
-        if (updatedValue.isBlank()) {
+        _uiState.update { it.copy(query = updatedValue) }
+
+        if (updatedValue.length < minQueryLength) {
             _uiState.update {
                 it.copy(
-                    query = updatedValue,
-                    suggestions = listOf(),
                     querySuggestions = listOf(),
-                    searchState = SearchState.INITIAL
+                    searchState = if (updatedValue.isBlank()) SearchState.INITIAL else it.searchState,
+                    suggestions = if (updatedValue.isBlank()) listOf() else it.suggestions
                 )
             }
             return
         }
-
-        _uiState.update { it.copy(query = updatedValue) }
 
         suggestionsJob = viewModelScope.launch {
             val result = musicRepository.getSearchSuggestions(updatedValue)
@@ -78,6 +77,11 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             musicRepository.deleteRecentQuery(query)
         }
+    }
+
+    fun onQuerySelected(query: String) {
+        updateQueryFrom(query)
+        search()
     }
 
     fun search() {

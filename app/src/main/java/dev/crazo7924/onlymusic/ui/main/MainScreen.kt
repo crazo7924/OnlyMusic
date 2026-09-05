@@ -321,6 +321,7 @@ fun MainScreen(
             },
             onSearch = { searchViewModel.search() },
             onSearchQueryUpdated = { searchViewModel.updateQueryFrom(it) },
+            onQuerySelected = { searchViewModel.onQuerySelected(it) },
             onEnqueueRadio = { item ->
                 Log.d(
                     MainActivity.TAG, "Enqueuing Radio for item: ${item.mediaUri}"

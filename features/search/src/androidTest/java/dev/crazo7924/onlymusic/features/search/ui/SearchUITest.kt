@@ -23,7 +23,8 @@ class SearchUITest {
                 onEnqueueRadio = {},
                 onEnqueueNext = {},
                 onSearch = {},
-                onSearchQueryUpdated = {}
+                onSearchQueryUpdated = {},
+                onQuerySelected = {}
             )
         }
 
@@ -40,7 +41,8 @@ class SearchUITest {
                 onEnqueueRadio = {},
                 onEnqueueNext = {},
                 onSearch = {},
-                onSearchQueryUpdated = {}
+                onSearchQueryUpdated = {},
+                onQuerySelected = {}
             )
         }
 
