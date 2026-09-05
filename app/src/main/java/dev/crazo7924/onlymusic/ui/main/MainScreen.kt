@@ -339,6 +339,7 @@ fun MainScreen(
                     "Sent command ${PlayerService.COMMAND_ENQUEUE_RADIO.customAction} with URI ${item.mediaUri}"
                 )
             },
+            onDeleteRecentQuery = { searchViewModel.deleteRecentQuery(it) }
         )
     }
 }

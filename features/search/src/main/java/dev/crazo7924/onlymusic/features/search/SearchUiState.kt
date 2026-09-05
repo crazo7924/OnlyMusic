@@ -19,5 +19,7 @@ data class SearchUiState(
     val query: String = "",
     val suggestions: List<MediaListItem> = listOf(),
     val searchState: SearchState = SearchState.INITIAL,
-    val recentSongs: List<MediaListItem> = listOf()
+    val recentSongs: List<MediaListItem> = listOf(),
+    val querySuggestions: List<String> = listOf(),
+    val recentQueries: List<String> = listOf()
 )

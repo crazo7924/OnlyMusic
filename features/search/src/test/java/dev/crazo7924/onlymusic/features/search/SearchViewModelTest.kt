@@ -23,13 +23,15 @@ import org.schabi.newpipe.extractor.InfoItem
 class SearchViewModelTest {
 
     private lateinit var viewModel: SearchViewModel
-    private val musicRepository: MusicRepository = mockk()
+    private val musicRepository: MusicRepository = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         coEvery { musicRepository.getRecentSongs() } returns flowOf(emptyList())
+        coEvery { musicRepository.getRecentQueries() } returns flowOf(listOf("rock", "jazz"))
+        coEvery { musicRepository.getSearchSuggestions(any()) } returns Result.success(emptyList())
         viewModel = SearchViewModel(musicRepository)
     }
 
@@ -39,9 +41,43 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `updateQueryFrom updates query state correctly`() {
-        viewModel.updateQueryFrom("hello")
+    fun `init loads recent queries into state`() = runTest {
+        advanceUntilIdle()
+        assertEquals(listOf("rock", "jazz"), viewModel.uiState.value.recentQueries)
+    }
+
+    @Test
+    fun `updateQueryFrom fetches search suggestions`() = runTest {
+        val query = "hello"
+        val expectedSuggestions = listOf("hello world", "hello darkness")
+        coEvery { musicRepository.getSearchSuggestions(query) } returns Result.success(expectedSuggestions)
+
+        viewModel.updateQueryFrom(query)
+        advanceUntilIdle()
+
         assertEquals("hello", viewModel.uiState.value.query)
+        assertEquals(expectedSuggestions, viewModel.uiState.value.querySuggestions)
+    }
+
+    @Test
+    fun `search adds query to recent queries history`() = runTest {
+        val testQuery = "test"
+        val mockItem = MediaListItem(id = "1", title = "Test Song", artist = "Test Artist", infoType = InfoItem.InfoType.STREAM, thumbnailUri = "dummy", duration = 1000L)
+        coEvery { musicRepository.search(testQuery) } returns flowOf(Result.success(mockItem))
+
+        viewModel.updateQueryFrom(testQuery)
+        viewModel.search()
+        advanceUntilIdle()
+
+        coVerify { musicRepository.addRecentQuery(testQuery) }
+    }
+
+    @Test
+    fun `deleteRecentQuery triggers repository deletion`() = runTest {
+        viewModel.deleteRecentQuery("rock")
+        advanceUntilIdle()
+
+        coVerify { musicRepository.deleteRecentQuery("rock") }
     }
 
     @Test

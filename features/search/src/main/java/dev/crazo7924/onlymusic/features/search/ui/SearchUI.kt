@@ -43,12 +43,12 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import dev.crazo7924.onlymusic.core.R as commonR
 import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
 import dev.crazo7924.onlymusic.features.search.R
 import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
+import dev.crazo7924.onlymusic.core.R as commonR
 
 @Composable
 fun SearchUI(
@@ -59,6 +59,7 @@ fun SearchUI(
     onEnqueueNext: (MediaListItem) -> Unit,
     onSearch: () -> Unit,
     onSearchQueryUpdated: (String) -> Unit,
+    onDeleteRecentQuery: (String) -> Unit = {},
 ) {
     Scaffold(topBar = {
         TopSearchBar(
@@ -69,7 +70,18 @@ fun SearchUI(
             query = searchUiState.query,
             onQueryChange = onSearchQueryUpdated,
             onSearch = onSearch,
-            placeholder = stringResource(commonR.string.app_name)
+            placeholder = stringResource(commonR.string.app_name),
+            recentQueries = searchUiState.recentQueries,
+            querySuggestions = searchUiState.querySuggestions,
+            onRecentQuerySelected = { query ->
+                onSearchQueryUpdated(query)
+                onSearch()
+            },
+            onSuggestionSelected = { suggestion ->
+                onSearchQueryUpdated(suggestion)
+                onSearch()
+            },
+            onDeleteRecentQuery = onDeleteRecentQuery
         )
     }) { innerPadding ->
 

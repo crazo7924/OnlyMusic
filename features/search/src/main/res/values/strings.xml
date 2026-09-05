@@ -10,4 +10,6 @@
     <string name="something_went_wrong">Something went wrong :(</string>
     <string name="clear_search_query">Clear search query</string>
     <string name="recently_played">Recently played</string>
+    <string name="recent_searches">Recent searches</string>
+    <string name="remove_search_query">Remove from history</string>
 </resources>
