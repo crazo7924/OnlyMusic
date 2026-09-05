@@ -122,4 +122,30 @@ class SearchViewModelTest {
 
         assertEquals(SearchState.ERROR, viewModel.uiState.value.searchState)
     }
+
+    @Test
+    fun `updateQueryFrom with short query clears suggestions and does not fetch`() = runTest {
+        val shortQuery = "a"
+
+        viewModel.updateQueryFrom(shortQuery)
+        advanceUntilIdle()
+
+        assertEquals(shortQuery, viewModel.uiState.value.query)
+        assertEquals(emptyList<String>(), viewModel.uiState.value.querySuggestions)
+        coVerify(exactly = 0) { musicRepository.getSearchSuggestions(any()) }
+    }
+
+    @Test
+    fun `onQuerySelected updates query and triggers search`() = runTest {
+        val query = "jazz"
+        val mockItem = MediaListItem(id = "1", title = "Jazz Song", artist = "Jazz Artist", infoType = InfoItem.InfoType.STREAM, thumbnailUri = "dummy", duration = 1000L)
+        coEvery { musicRepository.search(query) } returns flowOf(Result.success(mockItem))
+
+        viewModel.onQuerySelected(query)
+        advanceUntilIdle()
+
+        assertEquals(query, viewModel.uiState.value.query)
+        coVerify { musicRepository.search(query) }
+        assertEquals(SearchState.SUCCESS, viewModel.uiState.value.searchState)
+    }
 }
