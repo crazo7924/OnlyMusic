@@ -28,7 +28,14 @@ jobs:
       - name: Prepare APK Info
         id: apk_info
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          # Use tag version for tag pushes; for manual workflow_dispatch runs use the commit SHA to avoid empty version errors
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            # Use short SHA for readability
+            VERSION=${GITHUB_SHA::7}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+
           PACKAGE_NAME=$(grep -oP "applicationId\s*=\s*['\"]?\K[^'\"]*" app/build.gradle.kts || echo "dev.crazo7924.onlymusic")
           APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
           if [ ! -z "$APK_PATH" ]; then
