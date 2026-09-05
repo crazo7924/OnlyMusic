@@ -42,7 +42,7 @@ class CachingMusicRepositoryTest {
     }
 
     @Test
-    fun `search caches results from remote without appending local recent songs`() = runTest {
+    fun `search returns results from remote without saving to recents`() = runTest {
         val query = "test query"
         val remoteItem = MediaListItem(
             id = "1",
@@ -54,20 +54,35 @@ class CachingMusicRepositoryTest {
             mediaUri = "http://media"
         )
 
-        // Mock remote search returning one item
         coEvery { remoteRepository.search(query) } returns flowOf(Result.success(remoteItem))
 
-        val recentPlaylistId = UUID.randomUUID().toString()
-        every { playlistDao.getRecentPlaylistId() } returns recentPlaylistId
-
-        // Execute search and collect results
         val results = repository.search(query).toList()
 
-        // Verify we got the remote item
         assertEquals(1, results.size)
         assertEquals(remoteItem, results[0].getOrNull())
 
-        // Verify caching operations happened
+        coVerify(exactly = 0) { songDao.insertSong(any()) }
+        coVerify(exactly = 0) { playlistDao.insertSongToPlaylist(any()) }
+    }
+
+    @Test
+    fun `saveToRecents saves item correctly and handles missing playlist`() = runTest {
+        val mediaItem = MediaListItem(
+            id = "1",
+            title = "Test Song",
+            artist = "Artist",
+            infoType = InfoItem.InfoType.STREAM,
+            duration = 1000L,
+            thumbnailUri = "http://thumb",
+            mediaUri = "http://media"
+        )
+        
+        // Mock missing playlist first, then successful retrieval
+        every { playlistDao.getRecentPlaylistId() } returns null andThen "new-playlist-id"
+
+        repository.saveToRecents(mediaItem)
+
+        coVerify { playlistDao.insertPlaylist(any()) }
         coVerify { songDao.insertSong(any()) }
         coVerify { playlistDao.insertSongToPlaylist(any()) }
     }

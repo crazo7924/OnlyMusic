@@ -9,7 +9,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import androidx.sqlite.db.SupportSQLiteDatabase
 import java.net.URI
 import java.util.UUID
 
@@ -31,18 +30,6 @@ abstract class OnlyMusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
     abstract fun artistDao(): ArtistDao
     abstract fun searchHistoryDao(): SearchHistoryDao
-}
-
-val initPlaylistCallback = object : RoomDatabase.Callback() {
-    override fun onCreate(db: SupportSQLiteDatabase) {
-        super.onCreate(db)
-        db.execSQL("INSERT INTO Playlist (playlistId, name, playlistType) VALUES (?, 'liked', 'INTERNAL')",
-            arrayOf(UUID.randomUUID())
-        )
-        db.execSQL("INSERT INTO Playlist (playlistId, name, playlistType) VALUES (?, 'recent', 'INTERNAL')",
-            arrayOf(UUID.randomUUID())
-        )
-    }
 }
 
 class Converters {

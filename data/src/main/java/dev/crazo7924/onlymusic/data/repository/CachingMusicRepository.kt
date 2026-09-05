@@ -9,8 +9,10 @@ import android.util.Log
 import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.data.db.Artist
 import dev.crazo7924.onlymusic.data.db.ArtistDao
+import dev.crazo7924.onlymusic.data.db.Playlist
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistSongsCrossRef
+import dev.crazo7924.onlymusic.data.db.PlaylistType
 import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
 import dev.crazo7924.onlymusic.data.db.SearchHistoryEntity
 import dev.crazo7924.onlymusic.data.db.Song
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.net.URI
+import java.util.UUID
 import javax.inject.Inject
 
 class CachingMusicRepository @Inject constructor(
@@ -34,47 +37,55 @@ class CachingMusicRepository @Inject constructor(
     private val searchHistoryDao: SearchHistoryDao,
 ) : MusicRepository by remoteRepository {
 
-    override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
+    override suspend fun saveToRecents(mediaListItem: MediaListItem) = withContext(Dispatchers.IO) {
+        var recentPlaylistId = playlistDao.getRecentPlaylistId()
 
-        val remoteResults = remoteRepository.search(query)
-
-        val recentPlaylistId = playlistDao.getRecentPlaylistId()
-
-        remoteResults.collect { result ->
-            emit(result)
-            result.getOrNull()?.let { mediaListItem ->
-                val song = Song(
-                    songId = mediaListItem.id,
-                    title = mediaListItem.title ?: "",
-                    uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
-                    artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
-                    duration = mediaListItem.duration ?: 0L
+        if (recentPlaylistId == null) {
+            val newPlaylistId = UUID.randomUUID()
+            playlistDao.insertPlaylist(
+                Playlist(
+                    playlistId = newPlaylistId,
+                    name = "recent",
+                    uri = null,
+                    playlistType = PlaylistType.INTERNAL
                 )
-                songDao.insertSong(song)
-
-                mediaListItem.artist?.let { artistName ->
-                    var artist = artistDao.getArtistByName(artistName)
-                    if (artist == null) {
-                        artist = Artist(name = artistName)
-                        artistDao.insertArtist(artist)
-                    }
-                    artistDao.insertSongArtistCrossRef(
-                        SongArtistCrossRef(
-                            songId = song.songId,
-                            artistId = artist.artistId
-                        )
-                    )
-                }
-
-                playlistDao.insertSongToPlaylist(
-                    PlaylistSongsCrossRef(
-                        playlistId = recentPlaylistId, songId = song.songId
-                    )
-                )
-            }
+            )
+            recentPlaylistId = newPlaylistId.toString()
         }
 
-    }.flowOn(Dispatchers.IO)
+        val song = Song(
+            songId = mediaListItem.id,
+            title = mediaListItem.title ?: "",
+            uri = mediaListItem.mediaUri?.let { URI.create("https://music.youtube.com/watch?v=${mediaListItem.id}") } ?: URI(""),
+            artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
+            duration = mediaListItem.duration ?: 0L
+        )
+        songDao.insertSong(song)
+
+        mediaListItem.artist?.let { artistName ->
+            var artist = artistDao.getArtistByName(artistName)
+            if (artist == null) {
+                artist = Artist(name = artistName)
+                artistDao.insertArtist(artist)
+            }
+            artistDao.insertSongArtistCrossRef(
+                SongArtistCrossRef(
+                    songId = song.songId,
+                    artistId = artist.artistId
+                )
+            )
+        }
+
+        playlistDao.insertSongToPlaylist(
+            PlaylistSongsCrossRef(
+                playlistId = recentPlaylistId, songId = song.songId
+            )
+        )
+    }
+
+    override suspend fun search(query: String): Flow<Result<MediaListItem>> {
+        return remoteRepository.search(query)
+    }
 
 
     override suspend fun getRecentSongs(): Flow<List<MediaListItem>> {

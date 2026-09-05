@@ -245,6 +245,10 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
         // No-op for remote repository
     }
 
+    override suspend fun saveToRecents(mediaListItem: MediaListItem) {
+        // No-op for remote repository
+    }
+
     companion object {
         private const val TAG = "NewPipeMusicRepository"
     }

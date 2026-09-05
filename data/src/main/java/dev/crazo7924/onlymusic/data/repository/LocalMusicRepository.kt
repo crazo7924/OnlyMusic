@@ -73,4 +73,8 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
     override suspend fun deleteRecentQuery(query: String) {
         // No-op
     }
+
+    override suspend fun saveToRecents(mediaListItem: MediaListItem) {
+        // No-op
+    }
 }
