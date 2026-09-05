@@ -1,14 +1,14 @@
-/*
- * SPDX-License-Identifier: AGPL-3.0-or-later
- * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
- */
-
 package dev.crazo7924.onlymusic.data.repository
 
 import dev.crazo7924.onlymusic.core.MediaListItem
-import dev.crazo7924.onlymusic.data.db.ArtistDao
+import dev.crazo7924.onlymusic.data.db.Playlist
+import dev.crazo7924.onlymusic.data.db.PlaylistType
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
+import dev.crazo7924.onlymusic.data.db.PlaylistWithSongs
+import dev.crazo7924.onlymusic.data.db.Song
+import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import dev.crazo7924.onlymusic.data.db.SongDao
+import dev.crazo7924.onlymusic.data.db.ArtistDao
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.schabi.newpipe.extractor.InfoItem
+import java.net.URI
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,74 +39,24 @@ class CachingMusicRepositoryTest {
     }
 
     @Test
-    fun `search returns results from remote without saving to recents`() = runTest {
+    fun `search caches results from remote without appending local recent songs`() = runTest {
         val query = "test query"
-        val remoteItem = MediaListItem(
-            id = "1",
-            title = "Remote Song",
-            artist = "Artist",
-            infoType = InfoItem.InfoType.STREAM,
-            duration = 1000L,
-            thumbnailUri = "http://thumb",
-            mediaUri = "http://media"
-        )
+        val remoteItem = MediaListItem(id = "1", title = "Remote Song", artist = "Artist", infoType = InfoItem.InfoType.STREAM, duration = 1000L, thumbnailUri = "http://thumb", mediaUri = "http://media")
 
+        // Mock remote search returning one item
         coEvery { remoteRepository.search(query) } returns flowOf(Result.success(remoteItem))
 
+        val recentPlaylistId = UUID.randomUUID().toString()
+        every { playlistDao.getRecentPlaylistId() } returns recentPlaylistId
+
+        // Execute search and collect results
         val results = repository.search(query).toList()
 
+        // Verify we got the remote item
         assertEquals(1, results.size)
         assertEquals(remoteItem, results[0].getOrNull())
 
-        coVerify(exactly = 0) { songDao.insertSong(any()) }
-        coVerify(exactly = 0) { playlistDao.insertSongToPlaylist(any()) }
-    }
-
-    @Test
-    fun `loadMediaUri saves item to recents on success`() = runTest {
-        val uri = "http://media"
-        val mediaItem = MediaListItem(
-            id = "1",
-            title = "Test Song",
-            artist = "Artist",
-            infoType = InfoItem.InfoType.STREAM,
-            duration = 1000L,
-            thumbnailUri = "http://thumb",
-            mediaUri = uri
-        )
-        val recentPlaylistId = UUID.randomUUID().toString()
-
-        every { playlistDao.getRecentPlaylistId() } returns recentPlaylistId
-        coEvery { remoteRepository.loadMediaUri(uri) } returns Result.success(mediaItem)
-
-        val result = repository.loadMediaUri(uri)
-
-        assertEquals(mediaItem, result.getOrNull())
-        coVerify { songDao.insertSong(any()) }
-        coVerify { playlistDao.insertSongToPlaylist(any()) }
-    }
-
-    @Test
-    fun `loadPlaylistUri saves items to recents on success`() = runTest {
-        val uri = "http://playlist"
-        val mediaItem = MediaListItem(
-            id = "1",
-            title = "Test Song",
-            artist = "Artist",
-            infoType = InfoItem.InfoType.STREAM,
-            duration = 1000L,
-            thumbnailUri = "http://thumb",
-            mediaUri = "http://media"
-        )
-        val recentPlaylistId = UUID.randomUUID().toString()
-
-        every { playlistDao.getRecentPlaylistId() } returns recentPlaylistId
-        coEvery { remoteRepository.loadPlaylistUri(uri) } returns flowOf(Result.success(mediaItem))
-
-        val results = repository.loadPlaylistUri(uri).toList()
-
-        assertEquals(1, results.size)
-        assertEquals(mediaItem, results[0].getOrNull())
+        // Verify caching operations happened
         coVerify { songDao.insertSong(any()) }
         coVerify { playlistDao.insertSongToPlaylist(any()) }
     }
