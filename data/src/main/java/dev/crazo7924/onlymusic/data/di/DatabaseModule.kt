@@ -17,6 +17,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.crazo7924.onlymusic.data.db.ArtistDao
 import dev.crazo7924.onlymusic.data.db.OnlyMusicDatabase
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
+import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
 import dev.crazo7924.onlymusic.data.db.SongDao
 import dev.crazo7924.onlymusic.data.db.initPlaylistCallback
 import javax.inject.Singleton
@@ -39,12 +40,20 @@ object DatabaseModule {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `search_history` (`query` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`query`))"
+                )
+            }
+        }
+
         return Room.databaseBuilder(
             context,
             OnlyMusicDatabase::class.java, "only-music-database"
         )
             .addCallback(initPlaylistCallback)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigration(dropAllTables = false)
             .build()
     }
@@ -62,5 +71,10 @@ object DatabaseModule {
     @Provides
     fun provideArtistDao(database: OnlyMusicDatabase): ArtistDao {
         return database.artistDao()
+    }
+
+    @Provides
+    fun provideSearchHistoryDao(database: OnlyMusicDatabase): SearchHistoryDao {
+        return database.searchHistoryDao()
     }
 }

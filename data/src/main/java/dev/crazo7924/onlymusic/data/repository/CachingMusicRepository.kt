@@ -11,6 +11,8 @@ import dev.crazo7924.onlymusic.data.db.Artist
 import dev.crazo7924.onlymusic.data.db.ArtistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.PlaylistSongsCrossRef
+import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
+import dev.crazo7924.onlymusic.data.db.SearchHistoryEntity
 import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongArtistCrossRef
 import dev.crazo7924.onlymusic.data.db.SongDao
@@ -20,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import java.net.URI
 import javax.inject.Inject
 
@@ -28,6 +31,7 @@ class CachingMusicRepository @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val songDao: SongDao,
     private val artistDao: ArtistDao,
+    private val searchHistoryDao: SearchHistoryDao,
 ) : MusicRepository by remoteRepository {
 
     override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
@@ -81,6 +85,29 @@ class CachingMusicRepository @Inject constructor(
             Log.d(TAG, "getRecentSongs: ${songs.size} found")
             emit(songs) // Correctly emit the fetched songs
         }.flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun getRecentQueries(): Flow<List<String>> {
+        return searchHistoryDao.getRecentQueries()
+    }
+
+    override suspend fun addRecentQuery(query: String) {
+        if (query.isNotBlank()) {
+            withContext(Dispatchers.IO) {
+                searchHistoryDao.insertOrUpdateQuery(
+                    SearchHistoryEntity(
+                        query = query.trim(),
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+            }
+        }
+    }
+
+    override suspend fun deleteRecentQuery(query: String) {
+        withContext(Dispatchers.IO) {
+            searchHistoryDao.deleteQuery(query)
+        }
     }
 
     companion object {

@@ -57,4 +57,20 @@ class LocalMusicRepository(private val playlistDao: PlaylistDao) : MusicReposito
     override suspend fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
         emit(emptyList()) // Or implement if needed, although local repo is unused
     }
+
+    override suspend fun getSearchSuggestions(query: String): Result<List<String>> {
+        return Result.success(emptyList())
+    }
+
+    override suspend fun getRecentQueries(): Flow<List<String>> = flow {
+        emit(emptyList())
+    }
+
+    override suspend fun addRecentQuery(query: String) {
+        // No-op
+    }
+
+    override suspend fun deleteRecentQuery(query: String) {
+        // No-op
+    }
 }

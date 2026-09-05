@@ -16,4 +16,9 @@ interface MusicRepository {
     suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>>
     suspend fun search(query: String): Flow<Result<MediaListItem>>
     suspend fun getRecentSongs(): Flow<List<MediaListItem>>
+
+    suspend fun getSearchSuggestions(query: String): Result<List<String>>
+    suspend fun getRecentQueries(): Flow<List<String>>
+    suspend fun addRecentQuery(query: String)
+    suspend fun deleteRecentQuery(query: String)
 }

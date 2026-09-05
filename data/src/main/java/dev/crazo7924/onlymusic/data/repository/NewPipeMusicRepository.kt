@@ -25,6 +25,7 @@ import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMixPlaylistExtractor
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeMusicSearchExtractor
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeSuggestionExtractor
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubePlaylistLinkHandlerFactory
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory.MUSIC_SONGS
@@ -223,6 +224,26 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
                 }
             }
         }.flowOn(Dispatchers.IO)
+
+    override suspend fun getSearchSuggestions(query: String): Result<List<String>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val extractor = YoutubeSuggestionExtractor(ServiceList.YouTube)
+                extractor.suggestionList(query)
+            }
+        }
+
+    override suspend fun getRecentQueries(): Flow<List<String>> = flow {
+        emit(emptyList())
+    }
+
+    override suspend fun addRecentQuery(query: String) {
+        // No-op for remote repository
+    }
+
+    override suspend fun deleteRecentQuery(query: String) {
+        // No-op for remote repository
+    }
 
     companion object {
         private const val TAG = "NewPipeMusicRepository"
