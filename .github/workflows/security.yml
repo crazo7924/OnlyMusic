@@ -43,6 +43,3 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: /language:java-kotlin
-
-  # Dependabot runs automatically via dependabot.yml config
-  # No job needed here—just documenting that it's monitored
