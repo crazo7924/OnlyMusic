@@ -30,48 +30,68 @@ class CachingMusicRepository @Inject constructor(
     private val artistDao: ArtistDao,
 ) : MusicRepository by remoteRepository {
 
-    override suspend fun search(query: String): Flow<Result<MediaListItem>> = flow {
-
-        val remoteResults = remoteRepository.search(query)
-
+    private suspend fun saveToRecents(mediaListItem: MediaListItem) {
         val recentPlaylistId = playlistDao.getRecentPlaylistId()
+        val song = Song(
+            songId = mediaListItem.id,
+            title = mediaListItem.title ?: "",
+            uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
+            artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
+            duration = mediaListItem.duration ?: 0L
+        )
+        songDao.insertSong(song)
 
-        remoteResults.collect { result ->
-            emit(result)
-            result.getOrNull()?.let { mediaListItem ->
-                val song = Song(
-                    songId = mediaListItem.id,
-                    title = mediaListItem.title ?: "",
-                    uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
-                    artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
-                    duration = mediaListItem.duration ?: 0L
-                )
-                songDao.insertSong(song)
-
-                mediaListItem.artist?.let { artistName ->
-                    var artist = artistDao.getArtistByName(artistName)
-                    if (artist == null) {
-                        artist = Artist(name = artistName)
-                        artistDao.insertArtist(artist)
-                    }
-                    artistDao.insertSongArtistCrossRef(
-                        SongArtistCrossRef(
-                            songId = song.songId,
-                            artistId = artist.artistId
-                        )
-                    )
-                }
-
-                playlistDao.insertSongToPlaylist(
-                    PlaylistSongsCrossRef(
-                        playlistId = recentPlaylistId, songId = song.songId
-                    )
-                )
+        mediaListItem.artist?.let { artistName ->
+            var artist = artistDao.getArtistByName(artistName)
+            if (artist == null) {
+                artist = Artist(name = artistName)
+                artistDao.insertArtist(artist)
             }
+            artistDao.insertSongArtistCrossRef(
+                SongArtistCrossRef(
+                    songId = song.songId,
+                    artistId = artist.artistId
+                )
+            )
         }
 
+        playlistDao.insertSongToPlaylist(
+            PlaylistSongsCrossRef(
+                playlistId = recentPlaylistId, songId = song.songId
+            )
+        )
+    }
+
+    override suspend fun loadMediaUri(uri: String?): Result<MediaListItem> {
+        val result = remoteRepository.loadMediaUri(uri)
+        result.getOrNull()?.let { saveToRecents(it) }
+        return result
+    }
+
+    override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> = flow {
+        remoteRepository.loadPlaylistUri(uri).collect { result ->
+            result.getOrNull()?.let { saveToRecents(it) }
+            emit(result)
+        }
     }.flowOn(Dispatchers.IO)
 
+    override suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>> = flow {
+        remoteRepository.loadAutoPlaylistUri(uri).collect { result ->
+            result.getOrNull()?.let { saveToRecents(it) }
+            emit(result)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> = flow {
+        remoteRepository.loadMorePlaylistItems().collect { result ->
+            result.getOrNull()?.let { saveToRecents(it) }
+            emit(result)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    override suspend fun search(query: String): Flow<Result<MediaListItem>> {
+        return remoteRepository.search(query)
+    }
 
     override suspend fun getRecentSongs(): Flow<List<MediaListItem>> {
         Log.d(TAG, "getRecentSongs: about to fetch")
@@ -79,7 +99,7 @@ class CachingMusicRepository @Inject constructor(
             val songs =
                 playlistDao.getRecentSongs()?.songs?.map { it.toMediaListItem() } ?: emptyList()
             Log.d(TAG, "getRecentSongs: ${songs.size} found")
-            emit(songs) // Correctly emit the fetched songs
+            emit(songs)
         }.flowOn(Dispatchers.IO)
     }
 
