@@ -24,7 +24,7 @@ jobs:
         with:
           cache-read-only: false
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
       - name: Prepare APK Info
         id: apk_info
         run: |
@@ -37,7 +37,7 @@ jobs:
           fi
 
           PACKAGE_NAME=$(grep -oP "applicationId\s*=\s*['\"]?\K[^'\"]*" app/build.gradle.kts || echo "dev.crazo7924.onlymusic")
-          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
           if [ ! -z "$APK_PATH" ]; then
             NEW_NAME="${PACKAGE_NAME}_${VERSION}.apk"
             cp "$APK_PATH" "$NEW_NAME"
