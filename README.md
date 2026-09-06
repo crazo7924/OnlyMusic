@@ -34,18 +34,6 @@ OnlyMusic is a modern music player with a beautiful, responsive UI built using J
 - Tap a result to play the track
 - From the search results list, you can start a "song radio" by long pressing for the context menu options to play related tracks continuously
 
-## Contributing
-Contributions, ideas, and feature requests are welcome. Planned improvements include:
-- Improved offline playback and caching
-- Playlists and queue management
-- User preferences and theming options
-- Enhanced discovery and recommendations
-
-If you'd like to contribute:
-1. Fork the repo
-2. Create a branch for your feature/fix
-3. Open a pull request describing your changes
-
 ## Acknowledgements
 - TeamNewPipe — for the extractor library (available on JitPack). Huge thanks for their open work.
 - Jetpack Compose — for making beautiful UI development on Android so much easier.
