@@ -1,7 +1,7 @@
 [versions]
 mockk = "1.14.11"
 composeUiTest = "1.11.4"
-robolectric = "4.16.1"
+robolectric = "4.17"
 
 agp = "9.2.1"
 kotlin = "2.4.20"
