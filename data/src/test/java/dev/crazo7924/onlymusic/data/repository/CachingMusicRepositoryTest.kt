@@ -157,7 +157,7 @@ class CachingMusicRepositoryTest {
         )
         val songWithArtists = dev.crazo7924.onlymusic.data.db.SongWithArtists(
             song = song,
-            artists = listOf(dev.crazo7924.onlymusic.data.db.Artist(artistId = "a1", name = "Test Artist"))
+            artists = listOf(dev.crazo7924.onlymusic.data.db.Artist(name = "Test Artist"))
         )
         val playlistWithSongs = dev.crazo7924.onlymusic.data.db.PlaylistWithSongs(
             playlist = playlist,
