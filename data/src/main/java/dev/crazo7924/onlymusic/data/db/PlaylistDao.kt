@@ -28,6 +28,16 @@ interface PlaylistDao {
     @Query("Select playlistId from Playlist where name = 'liked' and playlistType = 'INTERNAL'")
     fun getLikedPlaylistId(): String?
 
+    @Transaction
+    @Query("Select * from Playlist where name = 'queue' and playlistType = 'INTERNAL'")
+    fun getQueueSongs(): PlaylistWithSongs?
+
+    @Query("Select playlistId from Playlist where name = 'queue' and playlistType = 'INTERNAL'")
+    fun getQueuePlaylistId(): String?
+
+    @Query("Delete from PlaylistSongsCrossRef where playlistId = :playlistId")
+    fun clearPlaylistSongs(playlistId: String)
+
     @Query("Select * from Playlist where name = :name and playlistType = 'LOCAL'")
     fun findPlaylistsByName(name: String): List<Playlist>
 

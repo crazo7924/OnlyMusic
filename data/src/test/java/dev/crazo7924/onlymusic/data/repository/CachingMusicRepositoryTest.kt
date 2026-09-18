@@ -116,4 +116,62 @@ class CachingMusicRepositoryTest {
 
         coVerify { searchHistoryDao.deleteQuery("rock music") }
     }
+
+    @Test
+    fun `saveQueue clears existing queue and saves songs with index and position in URI`() = runTest {
+        val items = listOf(
+            MediaListItem(
+                id = "s1",
+                title = "Song 1",
+                artist = "Artist 1",
+                infoType = InfoItem.InfoType.STREAM,
+                thumbnailUri = "http://thumb1",
+                mediaUri = "http://media1",
+                duration = 2000L
+            )
+        )
+        every { playlistDao.getQueuePlaylistId() } returns "queue-playlist-id"
+
+        repository.saveQueue(items, 0, 1500L)
+
+        coVerify { playlistDao.clearPlaylistSongs("queue-playlist-id") }
+        coVerify { songDao.insertSong(match { it.songId == "s1" }) }
+        coVerify { playlistDao.insertSongToPlaylist(match { it.playlistId == "queue-playlist-id" && it.songId == "s1" }) }
+    }
+
+    @Test
+    fun `getSavedQueue returns SavedQueueState parsed correctly from playlist`() = runTest {
+        val playlistId = UUID.randomUUID()
+        val playlist = dev.crazo7924.onlymusic.data.db.Playlist(
+            playlistId = playlistId,
+            name = "queue",
+            uri = java.net.URI.create("queue://1/3000"),
+            playlistType = dev.crazo7924.onlymusic.data.db.PlaylistType.INTERNAL
+        )
+        val song = dev.crazo7924.onlymusic.data.db.Song(
+            songId = "song1",
+            title = "Test Song",
+            uri = java.net.URI.create("http://media"),
+            artworkUri = java.net.URI.create("http://thumb"),
+            duration = 5000L
+        )
+        val songWithArtists = dev.crazo7924.onlymusic.data.db.SongWithArtists(
+            song = song,
+            artists = listOf(dev.crazo7924.onlymusic.data.db.Artist(name = "Test Artist"))
+        )
+        val playlistWithSongs = dev.crazo7924.onlymusic.data.db.PlaylistWithSongs(
+            playlist = playlist,
+            songs = listOf(songWithArtists)
+        )
+
+        every { playlistDao.getQueueSongs() } returns playlistWithSongs
+
+        val savedQueue = repository.getSavedQueue()
+
+        org.junit.Assert.assertNotNull(savedQueue)
+        assertEquals(1, savedQueue?.activeIndex)
+        assertEquals(3000L, savedQueue?.positionMs)
+        assertEquals(1, savedQueue?.items?.size)
+        assertEquals("song1", savedQueue?.items?.get(0)?.id)
+    }
 }

@@ -83,6 +83,91 @@ class CachingMusicRepository @Inject constructor(
         )
     }
 
+    override suspend fun saveQueue(items: List<MediaListItem>, activeIndex: Int, positionMs: Long) =
+        withContext(Dispatchers.IO) {
+            var queuePlaylistId = playlistDao.getQueuePlaylistId()
+
+            val queuePlaylist = if (queuePlaylistId == null) {
+                val newPlaylistId = UUID.randomUUID()
+                val playlist = Playlist(
+                    playlistId = newPlaylistId,
+                    name = "queue",
+                    uri = URI.create("queue://$activeIndex/$positionMs"),
+                    playlistType = PlaylistType.INTERNAL
+                )
+                playlistDao.insertPlaylist(playlist)
+                queuePlaylistId = newPlaylistId.toString()
+                playlist
+            } else {
+                val playlist = Playlist(
+                    playlistId = UUID.fromString(queuePlaylistId),
+                    name = "queue",
+                    uri = URI.create("queue://$activeIndex/$positionMs"),
+                    playlistType = PlaylistType.INTERNAL
+                )
+                playlistDao.insertPlaylist(playlist)
+                playlist
+            }
+
+            playlistDao.clearPlaylistSongs(queuePlaylistId)
+
+            items.forEach { mediaListItem ->
+                val song = Song(
+                    songId = mediaListItem.id,
+                    title = mediaListItem.title ?: "",
+                    uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
+                    artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
+                    duration = mediaListItem.duration ?: 0L
+                )
+                songDao.insertSong(song)
+
+                mediaListItem.artist?.let { artistName ->
+                    var artist = artistDao.getArtistByName(artistName)
+                    if (artist == null) {
+                        artist = Artist(name = artistName)
+                        artistDao.insertArtist(artist)
+                    }
+                    artistDao.insertSongArtistCrossRef(
+                        SongArtistCrossRef(
+                            songId = song.songId,
+                            artistId = artist.artistId
+                        )
+                    )
+                }
+
+                playlistDao.insertSongToPlaylist(
+                    PlaylistSongsCrossRef(
+                        playlistId = queuePlaylistId,
+                        songId = song.songId
+                    )
+                )
+            }
+        }
+
+    override suspend fun getSavedQueue(): SavedQueueState? = withContext(Dispatchers.IO) {
+        val playlistWithSongs = playlistDao.getQueueSongs() ?: return@withContext null
+        val items = playlistWithSongs.songs.map { it.toMediaListItem() }
+        if (items.isEmpty()) return@withContext null
+
+        val uriStr = playlistWithSongs.playlist.uri?.toString() ?: ""
+        var activeIndex = 0
+        var positionMs = 0L
+
+        if (uriStr.startsWith("queue://")) {
+            val parts = uriStr.removePrefix("queue://").split("/")
+            if (parts.size >= 2) {
+                activeIndex = parts[0].toIntOrNull() ?: 0
+                positionMs = parts[1].toLongOrNull() ?: 0L
+            }
+        }
+
+        SavedQueueState(
+            items = items,
+            activeIndex = activeIndex,
+            positionMs = positionMs
+        )
+    }
+
     override suspend fun search(query: String): Flow<Result<MediaListItem>> {
         return remoteRepository.search(query)
     }

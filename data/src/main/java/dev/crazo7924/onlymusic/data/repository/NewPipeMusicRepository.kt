@@ -249,6 +249,14 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
         // No-op for remote repository
     }
 
+    override suspend fun saveQueue(items: List<MediaListItem>, activeIndex: Int, positionMs: Long) {
+        // No-op for remote repository
+    }
+
+    override suspend fun getSavedQueue(): SavedQueueState? {
+        return null
+    }
+
     companion object {
         private const val TAG = "NewPipeMusicRepository"
     }

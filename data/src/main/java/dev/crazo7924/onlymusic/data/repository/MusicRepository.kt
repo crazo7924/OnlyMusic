@@ -22,4 +22,13 @@ interface MusicRepository {
     suspend fun addRecentQuery(query: String)
     suspend fun deleteRecentQuery(query: String)
     suspend fun saveToRecents(mediaListItem: MediaListItem)
+
+    suspend fun saveQueue(items: List<MediaListItem>, activeIndex: Int, positionMs: Long)
+    suspend fun getSavedQueue(): SavedQueueState?
 }
+
+data class SavedQueueState(
+    val items: List<MediaListItem>,
+    val activeIndex: Int,
+    val positionMs: Long
+)

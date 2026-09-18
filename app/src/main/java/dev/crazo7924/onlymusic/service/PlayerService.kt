@@ -94,6 +94,7 @@ class PlayerService : MediaSessionService() {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
             resetRecentTimer(mediaItem)
+            saveCurrentQueueState()
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -105,6 +106,55 @@ class PlayerService : MediaSessionService() {
             } else {
                 recentJob?.cancel()
                 recentJob = null
+                saveCurrentQueueState()
+            }
+        }
+
+        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+            super.onTimelineChanged(timeline, reason)
+            saveCurrentQueueState()
+        }
+
+        override fun onPositionDiscontinuity(
+            oldPosition: Player.PositionInfo,
+            newPosition: Player.PositionInfo,
+            reason: Int
+        ) {
+            super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+            saveCurrentQueueState()
+        }
+    }
+
+    private fun saveCurrentQueueState() {
+        if (!::exoPlayer.isInitialized) return
+        val count = exoPlayer.mediaItemCount
+        val items = mutableListOf<dev.crazo7924.onlymusic.core.MediaListItem>()
+        for (i in 0 until count) {
+            items.add(exoPlayer.getMediaItemAt(i).toMediaListItem())
+        }
+        val activeIndex = exoPlayer.currentMediaItemIndex.coerceAtLeast(0)
+        val positionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+
+        serviceScope.launch {
+            musicRepository.saveQueue(items, activeIndex, positionMs)
+        }
+    }
+
+    private fun restoreQueueState() {
+        serviceScope.launch {
+            val savedQueue = musicRepository.getSavedQueue() ?: return@launch
+            if (savedQueue.items.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    val mediaItems = savedQueue.items.map { it.toMediaItem() }
+                    exoPlayer.setMediaItems(
+                        mediaItems,
+                        savedQueue.activeIndex.coerceIn(0, mediaItems.size - 1),
+                        savedQueue.positionMs
+                    )
+                    exoPlayer.prepare()
+                    exoPlayer.playWhenReady = false
+                    Log.d(TAG, "Queue restored with ${mediaItems.size} items at index ${savedQueue.activeIndex}.")
+                }
             }
         }
     }
@@ -154,6 +204,8 @@ class PlayerService : MediaSessionService() {
             .setSessionActivity(pendingIntent!!)
             .setCallback(mediaSessionCallback)
             .build()
+
+        restoreQueueState()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession =
@@ -191,6 +243,7 @@ class PlayerService : MediaSessionService() {
 
 
     override fun onDestroy() {
+        saveCurrentQueueState()
         mediaSession.release()
         exoPlayer.removeListener(playerListener)
         exoPlayer.release()
