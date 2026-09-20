@@ -67,6 +67,7 @@ class CachingMusicRepositoryTest {
 
     @Test
     fun `saveToRecents saves item correctly and handles missing playlist`() = runTest {
+        val playlistId = UUID.randomUUID().toString()
         val mediaItem = MediaListItem(
             id = "1",
             title = "Test Song",
@@ -78,7 +79,7 @@ class CachingMusicRepositoryTest {
         )
         
         // Mock missing playlist first, then successful retrieval
-        every { playlistDao.getRecentPlaylistId() } returns null andThen "new-playlist-id"
+        every { playlistDao.getRecentPlaylistId() } returns null andThen playlistId
 
         repository.saveToRecents(mediaItem)
 
@@ -119,6 +120,7 @@ class CachingMusicRepositoryTest {
 
     @Test
     fun `saveQueue clears existing queue and saves songs with index and position in URI`() = runTest {
+        val playlistId = UUID.randomUUID().toString()
         val items = listOf(
             MediaListItem(
                 id = "s1",
@@ -130,13 +132,13 @@ class CachingMusicRepositoryTest {
                 duration = 2000L
             )
         )
-        every { playlistDao.getQueuePlaylistId() } returns "queue-playlist-id"
+        every { playlistDao.getQueuePlaylistId() } returns playlistId
 
         repository.saveQueue(items, 0, 1500L)
 
-        coVerify { playlistDao.clearPlaylistSongs("queue-playlist-id") }
+        coVerify { playlistDao.clearPlaylistSongs(playlistId) }
         coVerify { songDao.insertSong(match { it.songId == "s1" }) }
-        coVerify { playlistDao.insertSongToPlaylist(match { it.playlistId == "queue-playlist-id" && it.songId == "s1" }) }
+        coVerify { playlistDao.insertSongToPlaylist(match { it.playlistId == playlistId && it.songId == "s1" }) }
     }
 
     @Test
