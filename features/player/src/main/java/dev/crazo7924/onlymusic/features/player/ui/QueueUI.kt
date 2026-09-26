@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,7 +93,7 @@ fun QueueList(
         }
     }
 
-    LazyColumn(modifier = modifier, state = listState) {
+    LazyColumn(modifier = modifier.testTag("queue_list"), state = listState) {
         items(count = mediaItems.size) { index ->
             val isPlaying = index == currentIndex
             val isPlayed = index < currentIndex

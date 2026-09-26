@@ -12,10 +12,11 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.google.devtools.ksp) apply false
     alias(libs.plugins.google.dagger.hilt.android) apply false
+    alias(libs.plugins.detekt) apply false
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" apply false
-
 }
 
 tasks.register<Delete>("clean") {
+    description = "Delete the build directory"
     delete(rootProject.layout.buildDirectory)
 }

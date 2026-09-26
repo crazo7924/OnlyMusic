@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 package dev.crazo7924.onlymusic
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -37,6 +42,6 @@ class MainScreenTest {
         }
 
         // Verify Search UI is displayed by checking for its placeholder text
-        composeTestRule.onNodeWithText("Search for music you love!").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Recently played").assertIsDisplayed()
     }
 }

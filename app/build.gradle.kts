@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
  */
 
+@file:Suppress("AvoidDuplicateDependencies")
 import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
@@ -10,6 +11,7 @@ plugins {
     alias(libs.plugins.google.dagger.hilt.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.detekt)
 }
 
 extensions.configure<ApplicationExtension>("android") {
@@ -22,7 +24,7 @@ extensions.configure<ApplicationExtension>("android") {
         versionCode = 16
         versionName = "0.8.2"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "dev.crazo7924.onlymusic.HiltTestRunner"
     }
 
     signingConfigs {
@@ -81,17 +83,6 @@ extensions.configure<ApplicationExtension>("android") {
 }
 
 dependencies {
-    testImplementation(libs.junit4)
-    testImplementation(libs.mockk)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.androidx.core.testing)
-    testImplementation(libs.robolectric)
-    androidTestImplementation(libs.androidx.junit.ktx)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.mockk.android)
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":features:player"))
@@ -115,10 +106,20 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
     androidTestImplementation(libs.androidx.core.testing)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit.ktx)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.core.ktx)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    kspAndroidTest(libs.hilt.compiler)
 
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }

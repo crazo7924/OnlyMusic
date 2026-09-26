@@ -15,6 +15,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -26,6 +27,7 @@ import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
+import dev.crazo7924.onlymusic.core.MediaListItem
 import dev.crazo7924.onlymusic.core.toMediaItem
 import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.data.repository.MusicRepository
@@ -86,6 +88,7 @@ class PlayerService : MediaSessionService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var mediaSession: MediaSession
     private lateinit var mediaSessionCallback: PlayerMediaSessionCallback
+    private lateinit var customCommandHandler: PlayerCustomCommandHandler
 
     private var recentJob: Job? = null
     private var currentMediaItemForRecent: MediaItem? = null
@@ -100,8 +103,9 @@ class PlayerService : MediaSessionService() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
-                if (recentJob == null && exoPlayer.currentMediaItem != null && exoPlayer.currentMediaItem != currentMediaItemForRecent) {
-                    startRecentTimer(exoPlayer.currentMediaItem!!)
+                val currentMedia = exoPlayer.currentMediaItem
+                if (recentJob == null && currentMedia != null && currentMedia != currentMediaItemForRecent) {
+                    startRecentTimer(currentMedia)
                 }
             } else {
                 recentJob?.cancel()
@@ -110,7 +114,7 @@ class PlayerService : MediaSessionService() {
             }
         }
 
-        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             super.onTimelineChanged(timeline, reason)
             saveCurrentQueueState()
         }
@@ -128,7 +132,7 @@ class PlayerService : MediaSessionService() {
     private fun saveCurrentQueueState() {
         if (!::exoPlayer.isInitialized) return
         val count = exoPlayer.mediaItemCount
-        val items = mutableListOf<dev.crazo7924.onlymusic.core.MediaListItem>()
+        val items = mutableListOf<MediaListItem>()
         for (i in 0 until count) {
             items.add(exoPlayer.getMediaItemAt(i).toMediaListItem())
         }
@@ -153,7 +157,10 @@ class PlayerService : MediaSessionService() {
                     )
                     exoPlayer.prepare()
                     exoPlayer.playWhenReady = false
-                    Log.d(TAG, "Queue restored with ${mediaItems.size} items at index ${savedQueue.activeIndex}.")
+                    Log.d(
+                        TAG,
+                        "Queue restored with ${mediaItems.size} items at index ${savedQueue.activeIndex}."
+                    )
                 }
             }
         }
@@ -176,7 +183,6 @@ class PlayerService : MediaSessionService() {
         }
     }
 
-
     override fun onCreate() {
         super.onCreate()
 
@@ -192,6 +198,7 @@ class PlayerService : MediaSessionService() {
 
         exoPlayer.addListener(playerListener)
 
+        customCommandHandler = PlayerCustomCommandHandler(exoPlayer, musicRepository, serviceScope)
         mediaSessionCallback = PlayerMediaSessionCallback()
 
         val activityIntent = Intent(this, MainActivity::class.java)
@@ -226,7 +233,7 @@ class PlayerService : MediaSessionService() {
                         TAG,
                         "onStartCommand: Handling initial Stream URI $initialStreamUri, autoPlay: $autoPlay"
                     )
-                    mediaSessionCallback.processLoadStreamUri(initialStreamUri, autoPlay)
+                    customCommandHandler.processLoadStreamUri(initialStreamUri, autoPlay)
                 }
 
                 initialPlaylistUri != null -> {
@@ -234,13 +241,12 @@ class PlayerService : MediaSessionService() {
                         TAG,
                         "onStartCommand: Handling initial Playlist URI $initialPlaylistUri, autoPlay: $autoPlay"
                     )
-                    mediaSessionCallback.processLoadPlaylistUri(initialPlaylistUri, autoPlay)
+                    customCommandHandler.processLoadPlaylistUri(initialPlaylistUri, autoPlay)
                 }
             }
         }
         return START_STICKY
     }
-
 
     override fun onDestroy() {
         saveCurrentQueueState()
@@ -252,153 +258,6 @@ class PlayerService : MediaSessionService() {
     }
 
     private inner class PlayerMediaSessionCallback : MediaSession.Callback {
-
-        private var isFetchingMore = false
-
-        fun processLoadMoreQueue() {
-            if (isFetchingMore) return
-            isFetchingMore = true
-            serviceScope.launch {
-                Log.d(TAG, "Fetching more items for queue...")
-                val resultFlow = musicRepository.loadMorePlaylistItems()
-                var addedCount = 0
-                resultFlow.collect { result ->
-                    result.onSuccess { item ->
-                        withContext(Dispatchers.Main) {
-                            exoPlayer.addMediaItem(item.toMediaItem())
-                            addedCount++
-                        }
-                    }.onFailure { error ->
-                        Log.e(TAG, "Error fetching more items: $error")
-                    }
-                }
-                if (addedCount > 0) {
-                    Log.d(TAG, "Added $addedCount more items to queue.")
-                } else {
-                    Log.d(TAG, "No more items to fetch.")
-                }
-                isFetchingMore = false
-            }
-        }
-
-        fun processLoadStreamUri(uri: String, playWhenReady: Boolean) {
-            serviceScope.launch {
-                val result = musicRepository.loadMediaUri(uri)
-                result.onSuccess { item ->
-                    withContext(Dispatchers.Main) {
-                        exoPlayer.setMediaItem(item.toMediaItem())
-                        exoPlayer.prepare()
-                        if (playWhenReady) exoPlayer.play()
-                        Log.d(TAG, "Stream URI loaded. Play when ready: $playWhenReady")
-                    }
-                }.onFailure { error ->
-                    Log.e(TAG, "Error loading stream URI $uri: $error")
-                }
-            }
-        }
-
-        fun processLoadPlaylistUri(playlistUri: String, playWhenReady: Boolean) {
-            serviceScope.launch {
-                exoPlayer.clearMediaItems()
-                val playlistUriResult = musicRepository.loadPlaylistUri(playlistUri)
-                val mediaItems = mutableListOf<MediaItem>()
-                playlistUriResult.collect { result ->
-                    result.onSuccess { mediaItems.add(it.toMediaItem()) }
-                        .onFailure { error ->
-                            Log.e(
-                                TAG,
-                                "Error loading item from playlist $playlistUri: $error"
-                            )
-                        }
-                }
-                if (mediaItems.isNotEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        exoPlayer.setMediaItems(mediaItems)
-                        exoPlayer.prepare()
-                        if (playWhenReady) exoPlayer.play()
-                        Log.d(TAG, "Playlist URI loaded. Play when ready: $playWhenReady")
-                    }
-                } else {
-                    Log.w(TAG, "No media items successfully loaded from playlist URI $playlistUri")
-                }
-            }
-        }
-
-        fun processEnqueueRadio(mediaUri: String) {
-            serviceScope.launch {
-                Log.d(TAG, "Radio URI received: $mediaUri")
-                val loadedMediaItems = musicRepository.loadAutoPlaylistUri(mediaUri)
-
-                loadedMediaItems.collect { result ->
-                    result.onSuccess { item ->
-                        withContext(Dispatchers.Main) {
-                            exoPlayer.addMediaItem(item.toMediaItem())
-                        }
-                    }
-                    result.onFailure {
-                        Log.e(TAG, "Bad media item received from radio url", it)
-                    }
-                }
-
-                Log.d(TAG, "processEnqueueRadio: successfully loaded radio for URI: $mediaUri")
-            }
-        }
-
-        fun processEnqueueUri(uri: String) {
-            serviceScope.launch {
-                val result = musicRepository.loadMediaUri(uri)
-                result.onSuccess { item ->
-                    withContext(Dispatchers.Main) {
-                        exoPlayer.addMediaItem(item.toMediaItem())
-                        Log.d(TAG, "URI enqueued.")
-                    }
-                }.onFailure { error ->
-                    Log.e(TAG, "Error enqueueing URI $uri: $error")
-                }
-            }
-        }
-
-        fun processEnqueuePlaylistUri(playlistUri: String) {
-            serviceScope.launch {
-                val results = musicRepository.loadPlaylistUri(playlistUri)
-                val mediaItems = mutableListOf<MediaItem>()
-                results.collect { result ->
-                    result.onSuccess { mediaItems.add(it.toMediaItem()) }
-                        .onFailure { error ->
-                            Log.e(
-                                TAG,
-                                "Error loading item from playlist for enqueue $playlistUri: $error"
-                            )
-                        }
-                }
-                if (mediaItems.isNotEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        exoPlayer.addMediaItems(mediaItems)
-                        Log.d(TAG, "Playlist URI enqueued.")
-                    }
-                } else {
-                    Log.w(
-                        TAG,
-                        "No media items successfully loaded from playlist URI for enqueue $playlistUri"
-                    )
-                }
-            }
-        }
-
-        fun processSeekToPercentage(percentage: Float) {
-            if (percentage !in 0f..1f) {
-                Log.d(TAG, "processSeekToPercentage: incorrect percentage value: $percentage")
-                return
-            }
-            val duration = exoPlayer.duration
-            if (duration == C.TIME_UNSET) {  // Check against TIME_UNSET for invalid duration
-                Log.d(TAG, "processSeekToPercentage: duration is not available for seek.")
-            } else {
-                val newPosition = (percentage * duration).toLong()
-                exoPlayer.seekTo(newPosition)
-                Log.d(TAG, "Media position changed to $newPosition ms (percentage: $percentage)")
-            }
-        }
 
         @OptIn(UnstableApi::class)
         override fun onConnect(
@@ -434,88 +293,225 @@ class PlayerService : MediaSessionService() {
                 TAG,
                 "onCustomCommand: ${customCommand.customAction} from ${controller.packageName}"
             )
-            when (customCommand) {
-                COMMAND_LOAD_STREAM_URI -> {
-                    val uri = args.getString(KEY_URI)
-                    val playWhenReady = args.getBoolean(KEY_PLAY_WHEN_READY, false)
-                    if (uri != null) {
-                        processLoadStreamUri(uri, playWhenReady)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_LOAD_PLAYLIST_URI -> {
-                    val playlistUri = args.getString(KEY_PLAYLIST_URI)
-                    val playWhenReady = args.getBoolean(KEY_PLAY_WHEN_READY, false)
-                    if (playlistUri != null) {
-                        processLoadPlaylistUri(playlistUri, playWhenReady)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_ENQUEUE_URI -> {
-                    val uri = args.getString(KEY_URI)
-                    if (uri != null) {
-                        processEnqueueUri(uri)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_ENQUEUE_NEXT_URI -> {
-                    val uri = args.getString(KEY_URI)
-                    if (uri != null) {
-                        processEnqueueNext(uri)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_ENQUEUE_PLAYLIST_URI -> {
-                    val playlistUri = args.getString(KEY_PLAYLIST_URI)
-                    if (playlistUri != null) {
-                        processEnqueuePlaylistUri(playlistUri)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_SEEK_TO_PERCENTAGE -> {
-                    val percentage = args.getFloat(KEY_PERCENTAGE, -1f)
-                    if (percentage != -1f) {
-                        processSeekToPercentage(percentage)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_ENQUEUE_RADIO -> {
-                    val mediaUri = args.getString(KEY_URI)
-                    if (mediaUri != null) {
-                        processEnqueueRadio(mediaUri)
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                    }
-                }
-
-                COMMAND_LOAD_MORE_QUEUE -> {
-                    processLoadMoreQueue()
-                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
-                }
+            val handled = customCommandHandler.handleCustomCommand(customCommand, args)
+            val resultCode = if (handled) {
+                SessionResult.RESULT_SUCCESS
+            } else {
+                SessionError.ERROR_UNKNOWN
             }
-            return Futures.immediateFuture(SessionResult(SessionError.ERROR_UNKNOWN)) // Or specific error
+            return Futures.immediateFuture(SessionResult(resultCode))
         }
+    }
+}
 
-        private fun processEnqueueNext(uri: String) {
-            serviceScope.launch {
-                val result = musicRepository.loadMediaUri(uri)
-                result.onSuccess { mediaItem ->
+private class PlayerCustomCommandHandler(
+    private val exoPlayer: ExoPlayer,
+    private val musicRepository: MusicRepository,
+    private val serviceScope: CoroutineScope,
+) {
+    private var isFetchingMore = false
+
+    fun handleCustomCommand(
+        customCommand: SessionCommand,
+        args: Bundle,
+    ): Boolean {
+        return when (customCommand) {
+            PlayerService.COMMAND_LOAD_STREAM_URI,
+            PlayerService.COMMAND_LOAD_PLAYLIST_URI -> handleLoadCommand(customCommand, args)
+
+            PlayerService.COMMAND_ENQUEUE_URI,
+            PlayerService.COMMAND_ENQUEUE_NEXT_URI,
+            PlayerService.COMMAND_ENQUEUE_PLAYLIST_URI,
+            PlayerService.COMMAND_ENQUEUE_RADIO -> handleEnqueueCommand(customCommand, args)
+
+            PlayerService.COMMAND_SEEK_TO_PERCENTAGE -> handleSeekCommand(args)
+
+            PlayerService.COMMAND_LOAD_MORE_QUEUE -> {
+                processLoadMoreQueue()
+                true
+            }
+
+            else -> false
+        }
+    }
+
+    private fun handleLoadCommand(customCommand: SessionCommand, args: Bundle): Boolean {
+        val playWhenReady = args.getBoolean(PlayerService.KEY_PLAY_WHEN_READY, false)
+        val uri = args.getString(PlayerService.KEY_URI)
+        val playlistUri = args.getString(PlayerService.KEY_PLAYLIST_URI)
+        return when (customCommand) {
+            PlayerService.COMMAND_LOAD_STREAM_URI -> if (uri != null) {
+                processLoadStreamUri(uri, playWhenReady)
+                true
+            } else false
+
+            PlayerService.COMMAND_LOAD_PLAYLIST_URI -> if (playlistUri != null) {
+                processLoadPlaylistUri(playlistUri, playWhenReady)
+                true
+            } else false
+
+            else -> false
+        }
+    }
+
+    private fun handleEnqueueCommand(customCommand: SessionCommand, args: Bundle): Boolean {
+        val uri = args.getString(PlayerService.KEY_URI)
+        val playlistUri = args.getString(PlayerService.KEY_PLAYLIST_URI)
+        val targetUri = if (customCommand == PlayerService.COMMAND_ENQUEUE_PLAYLIST_URI) {
+            playlistUri
+        } else {
+            uri
+        }
+        if (targetUri == null) return false
+        processEnqueue(customCommand, targetUri)
+        return true
+    }
+
+    private fun handleSeekCommand(args: Bundle): Boolean {
+        val percentage = args.getFloat(PlayerService.KEY_PERCENTAGE, -1f)
+        if (percentage != -1f) {
+            processSeekToPercentage(percentage)
+            return true
+        }
+        return false
+    }
+
+    fun processLoadMoreQueue() {
+        if (isFetchingMore) return
+        isFetchingMore = true
+        serviceScope.launch {
+            Log.d(PlayerService.TAG, "Fetching more items for queue...")
+            val resultFlow = musicRepository.loadMorePlaylistItems()
+            var addedCount = 0
+            resultFlow.collect { result ->
+                result.onSuccess { item ->
                     withContext(Dispatchers.Main) {
-                        exoPlayer.addMediaItem(
-                            exoPlayer.currentMediaItemIndex + 1,
-                            mediaItem.toMediaItem()
-                        )
-                        Log.d(TAG, "URI enqueued for next.")
+                        exoPlayer.addMediaItem(item.toMediaItem())
+                        addedCount++
                     }
                 }.onFailure { error ->
-                    Log.e(TAG, "Error enqueueing next URI $uri: $error")
+                    Log.e(PlayerService.TAG, "Error fetching more items: $error")
                 }
             }
+            if (addedCount > 0) {
+                Log.d(PlayerService.TAG, "Added $addedCount more items to queue.")
+            } else {
+                Log.d(PlayerService.TAG, "No more items to fetch.")
+            }
+            isFetchingMore = false
+        }
+    }
+
+    fun processLoadStreamUri(uri: String, playWhenReady: Boolean) {
+        serviceScope.launch {
+            val result = musicRepository.loadMediaUri(uri)
+            result.onSuccess { item ->
+                withContext(Dispatchers.Main) {
+                    exoPlayer.setMediaItem(item.toMediaItem())
+                    exoPlayer.prepare()
+                    if (playWhenReady) exoPlayer.play()
+                    Log.d(PlayerService.TAG, "Stream URI loaded. Play when ready: $playWhenReady")
+                }
+            }.onFailure { error ->
+                Log.e(PlayerService.TAG, "Error loading stream URI $uri: $error")
+            }
+        }
+    }
+
+    fun processLoadPlaylistUri(playlistUri: String, playWhenReady: Boolean) {
+        serviceScope.launch {
+            exoPlayer.clearMediaItems()
+            val playlistUriResult = musicRepository.loadPlaylistUri(playlistUri)
+            val mediaItems = mutableListOf<MediaItem>()
+            playlistUriResult.collect { result ->
+                result.onSuccess { mediaItems.add(it.toMediaItem()) }
+                    .onFailure { error ->
+                        Log.e(
+                            PlayerService.TAG,
+                            "Error loading item from playlist $playlistUri: $error"
+                        )
+                    }
+            }
+            if (mediaItems.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    exoPlayer.setMediaItems(mediaItems)
+                    exoPlayer.prepare()
+                    if (playWhenReady) exoPlayer.play()
+                    Log.d(PlayerService.TAG, "Playlist URI loaded. Play when ready: $playWhenReady")
+                }
+            } else {
+                Log.w(
+                    PlayerService.TAG,
+                    "No media items successfully loaded from playlist URI $playlistUri"
+                )
+            }
+        }
+    }
+
+    private fun processEnqueue(command: SessionCommand, uri: String) {
+        serviceScope.launch {
+            when (command) {
+                PlayerService.COMMAND_ENQUEUE_URI,
+                PlayerService.COMMAND_ENQUEUE_NEXT_URI -> {
+                    val result = musicRepository.loadMediaUri(uri)
+                    result.onSuccess { item ->
+                        withContext(Dispatchers.Main) {
+                            val index = if (command == PlayerService.COMMAND_ENQUEUE_NEXT_URI) {
+                                exoPlayer.currentMediaItemIndex + 1
+                            } else {
+                                exoPlayer.mediaItemCount
+                            }
+                            exoPlayer.addMediaItem(index, item.toMediaItem())
+                        }
+                    }.onFailure { error ->
+                        Log.e(PlayerService.TAG, "Error enqueueing URI $uri: $error")
+                    }
+                }
+
+                PlayerService.COMMAND_ENQUEUE_PLAYLIST_URI -> {
+                    val mediaItems = mutableListOf<MediaItem>()
+                    musicRepository.loadPlaylistUri(uri).collect { result ->
+                        result.onSuccess { mediaItems.add(it.toMediaItem()) }
+                    }
+                    if (mediaItems.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { exoPlayer.addMediaItems(mediaItems) }
+                    }
+                }
+
+                PlayerService.COMMAND_ENQUEUE_RADIO -> {
+                    musicRepository.loadAutoPlaylistUri(uri).collect { result ->
+                        result.onSuccess { item ->
+                            withContext(Dispatchers.Main) {
+                                exoPlayer.addMediaItem(item.toMediaItem())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun processSeekToPercentage(percentage: Float) {
+        if (percentage !in 0f..1f) {
+            Log.d(
+                PlayerService.TAG,
+                "processSeekToPercentage: incorrect percentage value: $percentage"
+            )
+            return
+        }
+        val duration = exoPlayer.duration
+        if (duration == C.TIME_UNSET) {
+            Log.d(
+                PlayerService.TAG,
+                "processSeekToPercentage: duration is not available for seek."
+            )
+        } else {
+            val newPosition = (percentage * duration).toLong()
+            exoPlayer.seekTo(newPosition)
+            Log.d(
+                PlayerService.TAG,
+                "Media position changed to $newPosition ms (percentage: $percentage)"
+            )
         }
     }
 }

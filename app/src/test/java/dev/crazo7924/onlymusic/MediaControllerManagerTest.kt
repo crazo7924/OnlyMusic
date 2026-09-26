@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 package dev.crazo7924.onlymusic
 
 import android.content.Context
@@ -10,7 +15,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +51,7 @@ class MediaControllerManagerTest {
 
         verify { playerViewModel.updateStateFromPlayer(mockController) }
         verify { mockController.addListener(any<Player.Listener>()) }
-        assertNotNull(mediaControllerManager.getController())
+        assert(mediaControllerManager.getController() != null)
     }
 
     @Test

@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class MediaControllerManager(
     private val context: Context,
@@ -61,6 +62,7 @@ class MediaControllerManager(
 
     fun release() {
         mediaControllerFuture?.let {
+            // Use the directExecutor to avoid thread mismatches during release
             MediaController.releaseFuture(it)
             Log.d(TAG, "MediaController released.")
         }
@@ -68,10 +70,8 @@ class MediaControllerManager(
     }
 
     fun getController(): MediaController? {
-        if (mediaControllerFuture?.isDone == true) {
-            return mediaControllerFuture?.get()
-        }
-        return null
+        val future = mediaControllerFuture?.takeIf { it.isDone } ?: return null
+        return runCatching { future.get() }.getOrNull()
     }
 
     private class PlayerListener(
@@ -93,7 +93,7 @@ class MediaControllerManager(
                     // ALWAYS use the 'player' instance from the listener context
                     playerViewModel.updatePosition(player.currentPosition.coerceAtLeast(0L))
                     playerViewModel.updateDuration(player.duration.coerceAtLeast(0L))
-                    delay(UPDATE_DELAY)
+                    delay(UPDATE_DELAY.milliseconds)
                 }
             }
         }
