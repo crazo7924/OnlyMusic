@@ -20,3 +20,9 @@ tasks.register<Delete>("clean") {
     description = "Delete the build directory"
     delete(rootProject.layout.buildDirectory)
 }
+// Mockk uses ByteBuddy and the latter uses DynamicAgentLoading
+subprojects {
+    tasks.withType<Test>().configureEach {
+        jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+}
