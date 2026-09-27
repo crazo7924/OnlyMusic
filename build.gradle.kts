@@ -3,6 +3,13 @@
  * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
  */
 
+import dev.detekt.gradle.Detekt
+
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 // Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -24,5 +31,17 @@ tasks.register<Delete>("clean") {
 subprojects {
     tasks.withType<Test>().configureEach {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+
+    tasks.withType<Detekt>().configureEach {
+        reports {
+            sarif.required.set(true)
+            sarif.outputLocation.set(
+                rootProject.layout.buildDirectory
+                    .file(
+                        "reports/detekt/${project.path.replace(":", "_").removePrefix("_")}.sarif"
+                    )
+            )
+        }
     }
 }
