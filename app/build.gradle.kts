@@ -4,6 +4,7 @@
  */
 
 @file:Suppress("AvoidDuplicateDependencies")
+
 import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
@@ -27,19 +28,8 @@ extensions.configure<ApplicationExtension>("android") {
         testInstrumentationRunner = "dev.crazo7924.onlymusic.HiltTestRunner"
     }
 
-    signingConfigs {
-        getByName("debug") {
-            storeFile = file("../debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     buildTypes {
-        debug {
-            signingConfig = signingConfigs.getByName("debug")
-        }
+        debug {}
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -65,8 +55,6 @@ extensions.configure<ApplicationExtension>("android") {
             pickFirsts.add("META-INF/LICENSE-notice.md")
         }
     }
-
-
 
     testOptions {
         unitTests {
