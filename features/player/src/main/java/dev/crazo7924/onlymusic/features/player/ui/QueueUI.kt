@@ -46,6 +46,7 @@ import dev.crazo7924.onlymusic.core.R
 import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
 import org.schabi.newpipe.extractor.InfoItem
 
+@Suppress("FunctionNaming")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) -> Unit, onLoadMore: () -> Unit = {}) {
@@ -69,6 +70,7 @@ fun QueueUI(items: List<MediaListItem>, currentIndex: Int, onItemClicked: (Int) 
     }
 }
 
+@Suppress("LongMethod", "FunctionNaming")
 @Composable
 fun QueueList(
     modifier: Modifier = Modifier,
@@ -157,6 +159,7 @@ fun QueueList(
 }
 
 // no translation of strings required for preview with dummy data
+@Suppress("FunctionNaming")
 @Preview(showBackground = true)
 @Composable
 private fun QueuePreview() {

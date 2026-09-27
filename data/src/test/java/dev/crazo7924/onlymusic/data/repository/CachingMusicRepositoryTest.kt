@@ -1,11 +1,21 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 package dev.crazo7924.onlymusic.data.repository
 
 import dev.crazo7924.onlymusic.core.MediaListItem
+import dev.crazo7924.onlymusic.data.db.Artist
 import dev.crazo7924.onlymusic.data.db.ArtistDao
+import dev.crazo7924.onlymusic.data.db.Playlist
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
+import dev.crazo7924.onlymusic.data.db.PlaylistType
+import dev.crazo7924.onlymusic.data.db.PlaylistWithSongs
 import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
-import dev.crazo7924.onlymusic.data.db.SearchHistoryEntity
+import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongDao
+import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -14,17 +24,20 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.schabi.newpipe.extractor.InfoItem
+import java.net.URI
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CachingMusicRepositoryTest {
 
     private lateinit var repository: CachingMusicRepository
-    private val remoteRepository: MusicRepository = mockk()
+    private val mediaRepository: MediaRepository = mockk()
+    private val searchRepository: SearchRepository = mockk()
     private val playlistDao: PlaylistDao = mockk(relaxed = true)
     private val songDao: SongDao = mockk(relaxed = true)
     private val artistDao: ArtistDao = mockk(relaxed = true)
@@ -33,7 +46,8 @@ class CachingMusicRepositoryTest {
     @Before
     fun setup() {
         repository = CachingMusicRepository(
-            remoteRepository,
+            mediaRepository,
+            searchRepository,
             playlistDao,
             songDao,
             artistDao,
@@ -54,7 +68,7 @@ class CachingMusicRepositoryTest {
             mediaUri = "http://media"
         )
 
-        coEvery { remoteRepository.search(query) } returns flowOf(Result.success(remoteItem))
+        coEvery { searchRepository.search(query) } returns flowOf(Result.success(remoteItem))
 
         val results = repository.search(query).toList()
 
@@ -77,7 +91,7 @@ class CachingMusicRepositoryTest {
             thumbnailUri = "http://thumb",
             mediaUri = "http://media"
         )
-        
+
         // Mock missing playlist first, then successful retrieval
         every { playlistDao.getRecentPlaylistId() } returns null andThen playlistId
 
@@ -144,24 +158,24 @@ class CachingMusicRepositoryTest {
     @Test
     fun `getSavedQueue returns SavedQueueState parsed correctly from playlist`() = runTest {
         val playlistId = UUID.randomUUID()
-        val playlist = dev.crazo7924.onlymusic.data.db.Playlist(
+        val playlist = Playlist(
             playlistId = playlistId,
             name = "queue",
-            uri = java.net.URI.create("queue://1/3000"),
-            playlistType = dev.crazo7924.onlymusic.data.db.PlaylistType.INTERNAL
+            uri = URI.create("queue://1/3000"),
+            playlistType = PlaylistType.INTERNAL
         )
-        val song = dev.crazo7924.onlymusic.data.db.Song(
+        val song = Song(
             songId = "song1",
             title = "Test Song",
-            uri = java.net.URI.create("http://media"),
-            artworkUri = java.net.URI.create("http://thumb"),
+            uri = URI.create("http://media"),
+            artworkUri = URI.create("http://thumb"),
             duration = 5000L
         )
-        val songWithArtists = dev.crazo7924.onlymusic.data.db.SongWithArtists(
+        val songWithArtists = SongWithArtists(
             song = song,
-            artists = listOf(dev.crazo7924.onlymusic.data.db.Artist(name = "Test Artist"))
+            artists = listOf(Artist(name = "Test Artist"))
         )
-        val playlistWithSongs = dev.crazo7924.onlymusic.data.db.PlaylistWithSongs(
+        val playlistWithSongs = PlaylistWithSongs(
             playlist = playlist,
             songs = listOf(songWithArtists)
         )
@@ -170,7 +184,7 @@ class CachingMusicRepositoryTest {
 
         val savedQueue = repository.getSavedQueue()
 
-        org.junit.Assert.assertNotNull(savedQueue)
+        Assert.assertNotNull(savedQueue)
         assertEquals(1, savedQueue?.activeIndex)
         assertEquals(3000L, savedQueue?.positionMs)
         assertEquals(1, savedQueue?.items?.size)

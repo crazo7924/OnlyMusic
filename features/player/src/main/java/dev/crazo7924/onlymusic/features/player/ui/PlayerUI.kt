@@ -56,6 +56,7 @@ import dev.crazo7924.onlymusic.features.player.PlaybackState
 import dev.crazo7924.onlymusic.features.player.PlayerUiState
 import dev.crazo7924.onlymusic.features.player.R
 
+@Suppress("LongMethod", "FunctionNaming")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerUI(
@@ -90,7 +91,8 @@ fun PlayerUI(
                     maxLines = 2
                 )
                 Text(
-                    text = playerUiState.media?.mediaMetadata?.title?.toString() ?: stringResource(commonR.string.song_unknown_title),
+                    text = playerUiState.media?.mediaMetadata?.title?.toString()
+                        ?: stringResource(commonR.string.song_unknown_title),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 2
@@ -257,6 +259,7 @@ fun PlayerUI(
     }
 }
 
+@Suppress("FunctionNaming")
 @Preview
 @Composable
 private fun PlayerPreview() {

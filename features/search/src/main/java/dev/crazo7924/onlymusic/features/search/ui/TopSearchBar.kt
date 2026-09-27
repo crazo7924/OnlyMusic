@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.crazo7924.onlymusic.features.search.R.string
 
+@Suppress("FunctionNaming", "LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopSearchBar(
@@ -170,6 +171,7 @@ fun TopSearchBar(
     )
 }
 
+@Suppress("FunctionNaming")
 @Preview(showSystemUi = true)
 @Composable
 fun TopSearchBarPreview() {

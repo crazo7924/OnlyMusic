@@ -8,7 +8,9 @@ package dev.crazo7924.onlymusic.features.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.crazo7924.onlymusic.data.repository.MusicRepository
+import dev.crazo7924.onlymusic.data.repository.RecentsRepository
+import dev.crazo7924.onlymusic.data.repository.SearchHistoryRepository
+import dev.crazo7924.onlymusic.data.repository.SearchRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +21,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val musicRepository: MusicRepository,
+    private val searchRepository: SearchRepository,
+    private val searchHistoryRepository: SearchHistoryRepository,
+    private val recentsRepository: RecentsRepository,
 ) : ViewModel() {
 
     val minQueryLength: Int = 2
@@ -37,12 +41,12 @@ class SearchViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            musicRepository.getRecentSongs().collect { songs ->
+            recentsRepository.getRecentSongs().collect { songs ->
                 _uiState.update { it.copy(recentSongs = songs) }
             }
         }
         viewModelScope.launch {
-            musicRepository.getRecentQueries().collect { queries ->
+            searchHistoryRepository.getRecentQueries().collect { queries ->
                 _uiState.update { it.copy(recentQueries = queries) }
             }
         }
@@ -64,7 +68,7 @@ class SearchViewModel @Inject constructor(
         }
 
         suggestionsJob = viewModelScope.launch {
-            val result = musicRepository.getSearchSuggestions(updatedValue)
+            val result = searchRepository.getSearchSuggestions(updatedValue)
             result.onSuccess { suggestions ->
                 if (_uiState.value.query == updatedValue) {
                     _uiState.update { it.copy(querySuggestions = suggestions) }
@@ -75,7 +79,7 @@ class SearchViewModel @Inject constructor(
 
     fun deleteRecentQuery(query: String) {
         viewModelScope.launch {
-            musicRepository.deleteRecentQuery(query)
+            searchHistoryRepository.deleteRecentQuery(query)
         }
     }
 
@@ -95,11 +99,11 @@ class SearchViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            musicRepository.addRecentQuery(currentQuery)
+            searchHistoryRepository.addRecentQuery(currentQuery)
         }
 
         viewModelScope.launch {
-            val suggestionsResult = musicRepository.search(currentQuery)
+            val suggestionsResult = searchRepository.search(currentQuery)
 
             // first reset the suggestions list
             _uiState.update {

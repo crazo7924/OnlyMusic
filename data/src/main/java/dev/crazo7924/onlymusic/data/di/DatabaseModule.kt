@@ -25,6 +25,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    @Suppress("MaxLineLength")
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): OnlyMusicDatabase {

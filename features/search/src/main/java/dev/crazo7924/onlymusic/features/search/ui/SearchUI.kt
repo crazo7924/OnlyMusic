@@ -50,6 +50,7 @@ import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
 import dev.crazo7924.onlymusic.core.R as commonR
 
+@Suppress("LongMethod", "FunctionNaming")
 @Composable
 fun SearchUI(
     searchUiState: SearchUiState,
@@ -151,6 +152,7 @@ fun SearchUI(
 }
 
 
+@Suppress("FunctionNaming", "LongMethod")
 @Composable
 fun SearchList(
     modifier: Modifier = Modifier,
@@ -231,6 +233,7 @@ fun SearchList(
     }
 }
 
+@Suppress("FunctionNaming")
 @Preview(showBackground = true)
 @Composable
 private fun SearchPreview() {

@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 
+@Suppress("MagicNumber")
 internal fun Long.toTimeString(): String {
     var hours = 0L
     var minutes = 0L

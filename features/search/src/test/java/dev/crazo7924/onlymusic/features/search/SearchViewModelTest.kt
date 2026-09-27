@@ -1,7 +1,14 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
+ */
+
 package dev.crazo7924.onlymusic.features.search
 
 import dev.crazo7924.onlymusic.core.MediaListItem
-import dev.crazo7924.onlymusic.data.repository.MusicRepository
+import dev.crazo7924.onlymusic.data.repository.RecentsRepository
+import dev.crazo7924.onlymusic.data.repository.SearchHistoryRepository
+import dev.crazo7924.onlymusic.data.repository.SearchRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -23,16 +30,18 @@ import org.schabi.newpipe.extractor.InfoItem
 class SearchViewModelTest {
 
     private lateinit var viewModel: SearchViewModel
-    private val musicRepository: MusicRepository = mockk(relaxed = true)
+    private val searchRepository: SearchRepository = mockk(relaxed = true)
+    private val searchHistoryRepository: SearchHistoryRepository = mockk(relaxed = true)
+    private val recentsRepository: RecentsRepository = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { musicRepository.getRecentSongs() } returns flowOf(emptyList())
-        coEvery { musicRepository.getRecentQueries() } returns flowOf(listOf("rock", "jazz"))
-        coEvery { musicRepository.getSearchSuggestions(any()) } returns Result.success(emptyList())
-        viewModel = SearchViewModel(musicRepository)
+        coEvery { recentsRepository.getRecentSongs() } returns flowOf(emptyList())
+        coEvery { searchHistoryRepository.getRecentQueries() } returns flowOf(listOf("rock", "jazz"))
+        coEvery { searchRepository.getSearchSuggestions(any()) } returns Result.success(emptyList())
+        viewModel = SearchViewModel(searchRepository, searchHistoryRepository, recentsRepository)
     }
 
     @After
@@ -50,7 +59,7 @@ class SearchViewModelTest {
     fun `updateQueryFrom fetches search suggestions`() = runTest {
         val query = "hello"
         val expectedSuggestions = listOf("hello world", "hello darkness")
-        coEvery { musicRepository.getSearchSuggestions(query) } returns Result.success(expectedSuggestions)
+        coEvery { searchRepository.getSearchSuggestions(query) } returns Result.success(expectedSuggestions)
 
         viewModel.updateQueryFrom(query)
         advanceUntilIdle()
@@ -62,14 +71,21 @@ class SearchViewModelTest {
     @Test
     fun `search adds query to recent queries history`() = runTest {
         val testQuery = "test"
-        val mockItem = MediaListItem(id = "1", title = "Test Song", artist = "Test Artist", infoType = InfoItem.InfoType.STREAM, thumbnailUri = "dummy", duration = 1000L)
-        coEvery { musicRepository.search(testQuery) } returns flowOf(Result.success(mockItem))
+        val mockItem = MediaListItem(
+            id = "1",
+            title = "Test Song",
+            artist = "Test Artist",
+            infoType = InfoItem.InfoType.STREAM,
+            thumbnailUri = "dummy",
+            duration = 1000L
+        )
+        coEvery { searchRepository.search(testQuery) } returns flowOf(Result.success(mockItem))
 
         viewModel.updateQueryFrom(testQuery)
         viewModel.search()
         advanceUntilIdle()
 
-        coVerify { musicRepository.addRecentQuery(testQuery) }
+        coVerify { searchHistoryRepository.addRecentQuery(testQuery) }
     }
 
     @Test
@@ -77,7 +93,7 @@ class SearchViewModelTest {
         viewModel.deleteRecentQuery("rock")
         advanceUntilIdle()
 
-        coVerify { musicRepository.deleteRecentQuery("rock") }
+        coVerify { searchHistoryRepository.deleteRecentQuery("rock") }
     }
 
     @Test
@@ -87,16 +103,23 @@ class SearchViewModelTest {
 
         assertEquals(SearchState.INITIAL, viewModel.uiState.value.searchState)
         assertEquals(emptyList<MediaListItem>(), viewModel.uiState.value.suggestions)
-        coVerify(exactly = 0) { musicRepository.search(any()) }
+        coVerify(exactly = 0) { searchRepository.search(any()) }
     }
 
     @Test
     fun `search with valid query updates state to SUCCESS`() = runTest {
         val testQuery = "test"
-        val mockItem = MediaListItem(id = "1", title = "Test Song", artist = "Test Artist", infoType = InfoItem.InfoType.STREAM, thumbnailUri = "dummy", duration = 1000L)
+        val mockItem = MediaListItem(
+            id = "1",
+            title = "Test Song",
+            artist = "Test Artist",
+            infoType = InfoItem.InfoType.STREAM,
+            thumbnailUri = "dummy",
+            duration = 1000L
+        )
         val mockFlow = flowOf(Result.success(mockItem))
 
-        coEvery { musicRepository.search(testQuery) } returns mockFlow
+        coEvery { searchRepository.search(testQuery) } returns mockFlow
 
         viewModel.updateQueryFrom(testQuery)
         viewModel.search()
@@ -113,7 +136,7 @@ class SearchViewModelTest {
     fun `search with empty results updates state to ERROR`() = runTest {
         val testQuery = "empty"
         // Return an empty flow (no elements collected)
-        coEvery { musicRepository.search(testQuery) } returns flowOf()
+        coEvery { searchRepository.search(testQuery) } returns flowOf()
 
         viewModel.updateQueryFrom(testQuery)
         viewModel.search()
@@ -132,20 +155,27 @@ class SearchViewModelTest {
 
         assertEquals(shortQuery, viewModel.uiState.value.query)
         assertEquals(emptyList<String>(), viewModel.uiState.value.querySuggestions)
-        coVerify(exactly = 0) { musicRepository.getSearchSuggestions(any()) }
+        coVerify(exactly = 0) { searchRepository.getSearchSuggestions(any()) }
     }
 
     @Test
     fun `onQuerySelected updates query and triggers search`() = runTest {
         val query = "jazz"
-        val mockItem = MediaListItem(id = "1", title = "Jazz Song", artist = "Jazz Artist", infoType = InfoItem.InfoType.STREAM, thumbnailUri = "dummy", duration = 1000L)
-        coEvery { musicRepository.search(query) } returns flowOf(Result.success(mockItem))
+        val mockItem = MediaListItem(
+            id = "1",
+            title = "Jazz Song",
+            artist = "Jazz Artist",
+            infoType = InfoItem.InfoType.STREAM,
+            thumbnailUri = "dummy",
+            duration = 1000L
+        )
+        coEvery { searchRepository.search(query) } returns flowOf(Result.success(mockItem))
 
         viewModel.onQuerySelected(query)
         advanceUntilIdle()
 
         assertEquals(query, viewModel.uiState.value.query)
-        coVerify { musicRepository.search(query) }
+        coVerify { searchRepository.search(query) }
         assertEquals(SearchState.SUCCESS, viewModel.uiState.value.searchState)
     }
 }

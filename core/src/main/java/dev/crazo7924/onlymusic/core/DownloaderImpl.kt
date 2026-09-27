@@ -6,7 +6,7 @@
 package dev.crazo7924.onlymusic.core
 
 import okhttp3.OkHttpClient
-import okhttp3.Request.*
+import okhttp3.Request.Builder
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -21,8 +21,7 @@ object DownloaderImpl : Downloader() {
 
     // Cookies are constant, precompute the string to avoid unnecessary allocations and iteration
     private val precomputedCookies = buildString {
-        // Recaptcha cookie is always added
-        // TODO: not sure if this is necessary
+        // Re-captcha cookie is always added
         append(RECAPTCHA_COOKIES_KEY).append("=")
         append("; ")
         append(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY).append("=").append(YOUTUBE_RESTRICTED_MODE_COOKIE)
@@ -81,7 +80,7 @@ object DownloaderImpl : Downloader() {
 
         for ((headerName, headerValueList) in headers) {
             requestBuilder.removeHeader(headerName)
-            for (i in 0 until headerValueList.size) {
+            for (i in headerValueList.indices) {
                 requestBuilder.addHeader(
                     headerName,
                     headerValueList[i]
@@ -90,7 +89,7 @@ object DownloaderImpl : Downloader() {
         }
 
         client.newCall(requestBuilder.build()).execute().use { response ->
-            if (response.code == 429) {
+            if (response.code == TOO_MANY_REQUESTS) {
                 throw ReCaptchaException("reCaptcha Challenge requested", url)
             }
             var responseBodyToReturn: String? = null
@@ -107,6 +106,8 @@ object DownloaderImpl : Downloader() {
             )
         }
     }
+
+    const val TOO_MANY_REQUESTS = 429
 }
 
 private const val RECAPTCHA_COOKIES_KEY = "recaptcha_cookies"
