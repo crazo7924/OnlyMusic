@@ -10,48 +10,42 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 @Dao
 interface PlaylistDao {
     @Transaction
     @Query("Select * from Playlist where name = 'liked' and playlistType = 'INTERNAL'")
-    fun getLikedSongs(): PlaylistWithSongs?
+    fun getLikedSongs(): Flow<PlaylistWithSongs?>
 
     @Transaction
     @Query("Select * from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
-    fun getRecentSongs(): PlaylistWithSongs?
+    fun getRecentSongs(): Flow<PlaylistWithSongs?>
 
     @Query("Select playlistId from Playlist where name = 'recent' and playlistType = 'INTERNAL'")
-    fun getRecentPlaylistId(): String?
+    suspend fun getRecentPlaylistId(): UUID?
 
     @Query("Select playlistId from Playlist where name = 'liked' and playlistType = 'INTERNAL'")
-    fun getLikedPlaylistId(): String?
+    suspend fun getLikedPlaylistId(): UUID?
 
     @Transaction
     @Query("Select * from Playlist where name = 'queue' and playlistType = 'INTERNAL'")
-    fun getQueueSongs(): PlaylistWithSongs?
+    suspend fun getQueueSongs(): PlaylistWithSongs?
 
     @Query("Select playlistId from Playlist where name = 'queue' and playlistType = 'INTERNAL'")
-    fun getQueuePlaylistId(): String?
+    suspend fun getQueuePlaylistId(): UUID?
 
     @Query("Delete from PlaylistSongsCrossRef where playlistId = :playlistId")
-    fun clearPlaylistSongs(playlistId: String)
-
-    @Query("Select * from Playlist where name = :name and playlistType = 'LOCAL'")
-    fun findPlaylistsByName(name: String): List<Playlist>
+    suspend fun clearPlaylistSongs(playlistId: UUID)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertPlaylist(playlist: Playlist)
+    suspend fun insertPlaylist(playlist: Playlist)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertSongToPlaylist(playlistSongsCrossRef: PlaylistSongsCrossRef)
-
-    @Transaction
-    @Query("insert into Playlist (name, playlistType) values (:name, 'LOCAL')")
-    fun createPlaylist(name: String)
+    suspend fun insertSongToPlaylist(playlistSongsCrossRef: PlaylistSongsCrossRef)
 
     @Transaction
     @Query("Select * from Playlist where playlistId = :id")
-    fun getPlaylist(id: UUID): PlaylistWithSongs?
+    fun getPlaylist(id: UUID): Flow<PlaylistWithSongs?>
 }

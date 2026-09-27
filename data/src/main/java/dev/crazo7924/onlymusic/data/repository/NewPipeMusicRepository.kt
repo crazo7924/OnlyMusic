@@ -32,7 +32,9 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import javax.inject.Inject
 
-class NewPipeMusicRepository @Inject constructor() : MusicRepository {
+private const val CHUNK_SIZE = 5
+
+class NewPipeMusicRepository @Inject constructor() : MediaRepository, SearchRepository {
 
     private var currentExtractor: ListExtractor<out InfoItem>? = null
     private var currentPage: ListExtractor.InfoItemsPage<out InfoItem>? = null
@@ -42,14 +44,16 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
         YoutubeParsingHelper.setConsentAccepted(true)
     }
 
-
     override suspend fun search(query: String): Flow<Result<MediaListItem>> =
         flow {
             val linkHandler = YoutubeSearchQueryHandlerFactory.getInstance().fromQuery(
-                query, listOf(MUSIC_SONGS), ""
+                query,
+                listOf(MUSIC_SONGS),
+                ""
             )
             val extractor = YoutubeMusicSearchExtractor(
-                ServiceList.YouTube, linkHandler
+                ServiceList.YouTube,
+                linkHandler
             )
 
             Log.d(TAG, "search: About to call fetchPage()")
@@ -66,20 +70,23 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
                 Log.d(TAG, "search results count: ${items.size}")
                 if (items.isEmpty()) Log.e(TAG, "No results")
                 return@runCatching items.map { item ->
-                    if (item !is StreamInfoItem) emit(Result.failure(Throwable("Got an unexpected InfoItem type in search results")))
-                    else emit(
-                        Result.success(
-                            MediaListItem(
-                                id = item.url.substringAfter("?v="),
-                                title = item.name,
-                                artist = item.uploaderName.substringBefore(" - "),
-                                infoType = item.infoType,
-                                thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
-                                mediaUri = item.url, // not actual media uri so that search results show up quickly
-                                duration = item.duration
+                    if (item !is StreamInfoItem) {
+                        emit(Result.failure(Throwable("Got an unexpected InfoItem type in search results")))
+                    } else {
+                        emit(
+                            Result.success(
+                                MediaListItem(
+                                    id = item.url.substringAfter("?v="),
+                                    title = item.name,
+                                    artist = item.uploaderName.substringBefore(" - "),
+                                    infoType = item.infoType,
+                                    thumbnailUri = item.thumbnails.maxBy { image -> image.height }.url,
+                                    mediaUri = item.url, // not actual media uri so that search results show up quickly
+                                    duration = item.duration
+                                )
                             )
                         )
-                    )
+                    }
                 }
             }
 
@@ -98,32 +105,33 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
             }
 
             return@withContext result.fold(
-                    onSuccess = {
-                        Log.d(
-                            TAG,
-                            "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
+                onSuccess = {
+                    Log.d(
+                        TAG,
+                        "loadMediaUri: Successfully extracted ${extractor.url}. Now parsing..."
+                    )
+                    val mediaUri = (
+                        extractor.audioStreams.maxByOrNull { it.bitrate }
+                            ?: extractor.videoStreams.maxByOrNull { it.bitrate }
+                        )?.content
+                    if (mediaUri == null) return@fold Result.failure(Exception("No playable streams found"))
+                    Result.success(
+                        MediaListItem(
+                            id = extractor.url.substringAfter("?v="),
+                            title = extractor.name,
+                            artist = extractor.uploaderName.substringBefore(" - "),
+                            infoType = InfoType.STREAM,
+                            thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
+                            mediaUri = mediaUri,
+                            duration = extractor.length * 1000L
                         )
-                        val mediaUri = (extractor.audioStreams.maxByOrNull { it.bitrate }
-                            ?: extractor.videoStreams.maxByOrNull { it.bitrate })?.content
-                        if (mediaUri == null) return@fold Result.failure(Exception("No playable streams found"))
-                        Result.success(
-                            MediaListItem(
-                                id = extractor.url.substringAfter("?v="),
-                                title = extractor.name,
-                                artist = extractor.uploaderName.substringBefore(" - "),
-                                infoType = InfoType.STREAM,
-                                thumbnailUri = extractor.thumbnails.maxBy { image -> image.height }.url,
-                                mediaUri = mediaUri,
-                                duration = extractor.length * 1000L
-                            )
-                        )
-                    },
-                    onFailure = {
-                        Result.failure(it)
-                    }
+                    )
+                },
+                onFailure = {
+                    Result.failure(it)
+                }
             )
         }
-
 
     override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> = flow {
         val youtubeService = ServiceList.YouTube
@@ -139,7 +147,7 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
             currentExtractor = playListExtractor
             currentPage = playListExtractor.initialPage
 
-            playListExtractor?.initialPage?.items?.chunked(5)?.forEach { batch ->
+            playListExtractor?.initialPage?.items?.chunked(CHUNK_SIZE)?.forEach { batch ->
                 coroutineScope {
                     val deferredResults = batch.map { item ->
                         async { loadMediaUri(item.url) }
@@ -150,7 +158,6 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
                 }
             }
         }
-
     }.flowOn(Dispatchers.IO)
 
     override suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
@@ -163,7 +170,8 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
             val youtubeService = ServiceList.YouTube
             val initOutcome = runCatching {
                 YoutubeMixPlaylistExtractor(
-                    youtubeService, YoutubePlaylistLinkHandlerFactory.getInstance().fromUrl(
+                    youtubeService,
+                    YoutubePlaylistLinkHandlerFactory.getInstance().fromUrl(
                         "https://music.youtube.com/watch?v=$id&list=RD$id"
                     )
                 )
@@ -182,7 +190,7 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
             currentExtractor = playListExtractor
             currentPage = playListExtractor.initialPage
 
-            playListExtractor.initialPage.items.chunked(5).forEach { batch ->
+            playListExtractor.initialPage.items.chunked(CHUNK_SIZE).forEach { batch ->
                 coroutineScope {
                     val deferredResults = batch.map { item ->
                         async { loadMediaUri(item.url) }
@@ -193,10 +201,6 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
                 }
             }
         }.flowOn(Dispatchers.IO)
-
-    override suspend fun getRecentSongs(): Flow<List<MediaListItem>> = flow {
-        emit(emptyList()) // NewPipe repository doesn't have a concept of local recent songs
-    }
 
     override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
         flow {
@@ -213,7 +217,7 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
 
             currentPage = nextPage
 
-            nextPage.items.chunked(5).forEach { batch ->
+            nextPage.items.chunked(CHUNK_SIZE).forEach { batch ->
                 coroutineScope {
                     val deferredResults = batch.map { item ->
                         async { loadMediaUri(item.url) }
@@ -232,30 +236,6 @@ class NewPipeMusicRepository @Inject constructor() : MusicRepository {
                 extractor.suggestionList(query)
             }
         }
-
-    override suspend fun getRecentQueries(): Flow<List<String>> = flow {
-        emit(emptyList())
-    }
-
-    override suspend fun addRecentQuery(query: String) {
-        // No-op for remote repository
-    }
-
-    override suspend fun deleteRecentQuery(query: String) {
-        // No-op for remote repository
-    }
-
-    override suspend fun saveToRecents(mediaListItem: MediaListItem) {
-        // No-op for remote repository
-    }
-
-    override suspend fun saveQueue(items: List<MediaListItem>, activeIndex: Int, positionMs: Long) {
-        // No-op for remote repository
-    }
-
-    override suspend fun getSavedQueue(): SavedQueueState? {
-        return null
-    }
 
     companion object {
         private const val TAG = "NewPipeMusicRepository"

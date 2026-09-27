@@ -18,7 +18,6 @@ import dev.crazo7924.onlymusic.data.db.SongDao
 import dev.crazo7924.onlymusic.data.db.SongWithArtists
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -81,7 +80,7 @@ class CachingMusicRepositoryTest {
 
     @Test
     fun `saveToRecents saves item correctly and handles missing playlist`() = runTest {
-        val playlistId = UUID.randomUUID().toString()
+        val playlistId = UUID.randomUUID()
         val mediaItem = MediaListItem(
             id = "1",
             title = "Test Song",
@@ -93,7 +92,7 @@ class CachingMusicRepositoryTest {
         )
 
         // Mock missing playlist first, then successful retrieval
-        every { playlistDao.getRecentPlaylistId() } returns null andThen playlistId
+        coEvery { playlistDao.getRecentPlaylistId() } returnsMany listOf(null, playlistId)
 
         repository.saveToRecents(mediaItem)
 
@@ -134,7 +133,7 @@ class CachingMusicRepositoryTest {
 
     @Test
     fun `saveQueue clears existing queue and saves songs with index and position in URI`() = runTest {
-        val playlistId = UUID.randomUUID().toString()
+        val playlistId = UUID.randomUUID()
         val items = listOf(
             MediaListItem(
                 id = "s1",
@@ -146,7 +145,7 @@ class CachingMusicRepositoryTest {
                 duration = 2000L
             )
         )
-        every { playlistDao.getQueuePlaylistId() } returns playlistId
+        coEvery { playlistDao.getQueuePlaylistId() } returns playlistId
 
         repository.saveQueue(items, 0, 1500L)
 
@@ -180,7 +179,7 @@ class CachingMusicRepositoryTest {
             songs = listOf(songWithArtists)
         )
 
-        every { playlistDao.getQueueSongs() } returns playlistWithSongs
+        coEvery { playlistDao.getQueueSongs() } returns playlistWithSongs
 
         val savedQueue = repository.getSavedQueue()
 

@@ -18,24 +18,26 @@ import dev.crazo7924.onlymusic.data.db.SearchHistoryEntity
 import dev.crazo7924.onlymusic.data.db.Song
 import dev.crazo7924.onlymusic.data.db.SongArtistCrossRef
 import dev.crazo7924.onlymusic.data.db.SongDao
-import dev.crazo7924.onlymusic.data.di.RemoteRepository
 import dev.crazo7924.onlymusic.data.toMediaListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.net.URI
 import java.util.UUID
 import javax.inject.Inject
 
 class CachingMusicRepository @Inject constructor(
-    @param:RemoteRepository private val remoteRepository: MusicRepository,
+    private val mediaRepository: MediaRepository,
+    private val searchRepository: SearchRepository,
     private val playlistDao: PlaylistDao,
     private val songDao: SongDao,
     private val artistDao: ArtistDao,
     private val searchHistoryDao: SearchHistoryDao,
-) : MusicRepository by remoteRepository {
+) : MusicRepository,
+    MediaRepository by mediaRepository,
+    SearchRepository by searchRepository {
 
     override suspend fun saveToRecents(mediaListItem: MediaListItem) = withContext(Dispatchers.IO) {
         var recentPlaylistId = playlistDao.getRecentPlaylistId()
@@ -47,18 +49,20 @@ class CachingMusicRepository @Inject constructor(
                     playlistId = newPlaylistId,
                     name = "recent",
                     uri = null,
-                    playlistType = PlaylistType.INTERNAL
+                    playlistType = PlaylistType.INTERNAL,
                 )
             )
-            recentPlaylistId = newPlaylistId.toString()
+            recentPlaylistId = newPlaylistId
         }
 
         val song = Song(
             songId = mediaListItem.id,
             title = mediaListItem.title ?: "",
-            uri = mediaListItem.mediaUri?.let { URI.create("https://music.youtube.com/watch?v=${mediaListItem.id}") } ?: URI(""),
+            uri = mediaListItem.mediaUri?.let {
+                URI.create("https://music.youtube.com/watch?v=${mediaListItem.id}")
+            } ?: URI(""),
             artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
-            duration = mediaListItem.duration ?: 0L
+            duration = mediaListItem.duration ?: 0L,
         )
         songDao.insertSong(song)
 
@@ -71,14 +75,15 @@ class CachingMusicRepository @Inject constructor(
             artistDao.insertSongArtistCrossRef(
                 SongArtistCrossRef(
                     songId = song.songId,
-                    artistId = artist.artistId
+                    artistId = artist.artistId,
                 )
             )
         }
 
         playlistDao.insertSongToPlaylist(
             PlaylistSongsCrossRef(
-                playlistId = recentPlaylistId, songId = song.songId
+                playlistId = recentPlaylistId,
+                songId = song.songId,
             )
         )
     }
@@ -87,26 +92,24 @@ class CachingMusicRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             var queuePlaylistId = playlistDao.getQueuePlaylistId()
 
-            val queuePlaylist = if (queuePlaylistId == null) {
+            if (queuePlaylistId == null) {
                 val newPlaylistId = UUID.randomUUID()
                 val playlist = Playlist(
                     playlistId = newPlaylistId,
                     name = "queue",
                     uri = URI.create("queue://$activeIndex/$positionMs"),
-                    playlistType = PlaylistType.INTERNAL
+                    playlistType = PlaylistType.INTERNAL,
                 )
                 playlistDao.insertPlaylist(playlist)
-                queuePlaylistId = newPlaylistId.toString()
-                playlist
+                queuePlaylistId = newPlaylistId
             } else {
                 val playlist = Playlist(
-                    playlistId = UUID.fromString(queuePlaylistId),
+                    playlistId = queuePlaylistId,
                     name = "queue",
                     uri = URI.create("queue://$activeIndex/$positionMs"),
-                    playlistType = PlaylistType.INTERNAL
+                    playlistType = PlaylistType.INTERNAL,
                 )
                 playlistDao.insertPlaylist(playlist)
-                playlist
             }
 
             playlistDao.clearPlaylistSongs(queuePlaylistId)
@@ -117,7 +120,7 @@ class CachingMusicRepository @Inject constructor(
                     title = mediaListItem.title ?: "",
                     uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
                     artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
-                    duration = mediaListItem.duration ?: 0L
+                    duration = mediaListItem.duration ?: 0L,
                 )
                 songDao.insertSong(song)
 
@@ -130,7 +133,7 @@ class CachingMusicRepository @Inject constructor(
                     artistDao.insertSongArtistCrossRef(
                         SongArtistCrossRef(
                             songId = song.songId,
-                            artistId = artist.artistId
+                            artistId = artist.artistId,
                         )
                     )
                 }
@@ -138,7 +141,7 @@ class CachingMusicRepository @Inject constructor(
                 playlistDao.insertSongToPlaylist(
                     PlaylistSongsCrossRef(
                         playlistId = queuePlaylistId,
-                        songId = song.songId
+                        songId = song.songId,
                     )
                 )
             }
@@ -164,22 +167,16 @@ class CachingMusicRepository @Inject constructor(
         SavedQueueState(
             items = items,
             activeIndex = activeIndex,
-            positionMs = positionMs
+            positionMs = positionMs,
         )
     }
 
-    override suspend fun search(query: String): Flow<Result<MediaListItem>> {
-        return remoteRepository.search(query)
-    }
-
-
     override suspend fun getRecentSongs(): Flow<List<MediaListItem>> {
         Log.d(TAG, "getRecentSongs: about to fetch")
-        return flow {
-            val songs =
-                playlistDao.getRecentSongs()?.songs?.map { it.toMediaListItem() } ?: emptyList()
+        return playlistDao.getRecentSongs().map { playlistWithSongs ->
+            val songs = playlistWithSongs?.songs?.map { it.toMediaListItem() } ?: emptyList()
             Log.d(TAG, "getRecentSongs: ${songs.size} found")
-            emit(songs) // Correctly emit the fetched songs
+            songs
         }.flowOn(Dispatchers.IO)
     }
 
@@ -193,7 +190,7 @@ class CachingMusicRepository @Inject constructor(
                 searchHistoryDao.insertOrUpdateQuery(
                     SearchHistoryEntity(
                         query = query.trim(),
-                        timestamp = System.currentTimeMillis()
+                        timestamp = System.currentTimeMillis(),
                     )
                 )
             }
