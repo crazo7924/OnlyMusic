@@ -1,6 +1,0 @@
-name: "CodeQL Custom Configuration"
-
-# Tells CodeQL to completely ignore auto-generated build files
-paths-ignore:
-  - "**/build/generated/**"
-  - "**/build/tmp/**"
