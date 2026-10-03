@@ -16,6 +16,8 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+private const val READ_TIMEOUT = 30L
+
 // source: https://github.com/TeamNewPipe/NewPipe/blob/7cecda5713c3a9c493f7fbc0bc74f61483954a95/app/src/main/java/org/schabi/newpipe/DownloaderImpl.java
 object DownloaderImpl : Downloader() {
 
@@ -30,30 +32,12 @@ object DownloaderImpl : Downloader() {
     private val client: OkHttpClient = OkHttpClient.Builder()
         .retryOnConnectionFailure(true)
         .readTimeout(
-            30,
+            READ_TIMEOUT,
             TimeUnit.SECONDS
         ).build()
 
     private fun getCookies(): String {
         return precomputedCookies
-    }
-
-    /**
-     * Get the size of the content that the url is pointing by firing a HEAD request.
-     *
-     * @param url an url pointing to the content
-     * @return the size of the content, in bytes
-     */
-    @Throws(IOException::class)
-    fun getContentLength(url: String?): Long {
-        try {
-            val response = head(url)
-            return response.getHeader("Content-Length")!!.toLong()
-        } catch (e: NumberFormatException) {
-            throw IOException("Invalid content length", e)
-        } catch (e: ReCaptchaException) {
-            throw IOException(e)
-        }
     }
 
     @Throws(IOException::class, ReCaptchaException::class)

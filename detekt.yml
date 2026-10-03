@@ -1,0 +1,46 @@
+complexity:
+  # Compose preview files often cluster multiple preview configurations together
+  TooManyFunctions:
+    active: true
+    ignoreAnnotated:
+      - Composable
+      - RunWith
+  LongParameterList:
+    active: true
+    ignoreAnnotated:
+      - Composable
+  LongMethod:
+    active: true
+    ignoreAnnotated:
+      - Composable
+
+style:
+  # Prevents detekt from flagging @Preview components as dead/unused code
+  UnusedPrivateFunction:
+    active: true
+    ignoreAnnotated:
+      - Preview
+
+  # Avoids flagging hex color definitions (e.g., Color(0xFF123456)) as magic numbers
+  MagicNumber:
+    active: true
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated:
+      - Test
+
+potential-bugs:
+  IgnoredReturnValue:
+    active: true
+    ignoreAnnotated:
+      - Test
+
+naming:
+  # Allows Composable functions to start with a Capital letter (PascalCase)
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    excludeClassPattern: '$^'
+    ignoreAnnotated:
+      - Composable
+      - Test

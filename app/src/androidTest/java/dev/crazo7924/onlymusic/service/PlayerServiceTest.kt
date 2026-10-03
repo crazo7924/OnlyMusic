@@ -33,7 +33,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import kotlin.time.Duration.Companion.milliseconds
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -46,6 +45,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -95,7 +95,7 @@ class PlayerServiceTest {
             }
             delay(50.milliseconds)
         }
-        throw IllegalStateException("MediaController failed to connect within 5 seconds")
+        error("MediaController failed to connect within 5 seconds")
     }
 
     private fun createMediaListItem(
@@ -274,10 +274,16 @@ class PlayerServiceTest {
 
         val controller = awaitController()
 
-        controller.sendCustomCommand(PlayerService.COMMAND_LOAD_STREAM_URI, Bundle().apply { putString(PlayerService.KEY_URI, uri1) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_LOAD_STREAM_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uri1) }
+        )
         controller.awaitTimelineChange(1)
 
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_URI, Bundle().apply { putString(PlayerService.KEY_URI, uri2) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uri2) }
+        )
 
         val updated = controller.awaitTimelineChange(2)
         assertTrue("Queue size should be 2 after enqueue", updated)
@@ -292,7 +298,10 @@ class PlayerServiceTest {
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
 
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_URI, Bundle().apply { putString(PlayerService.KEY_URI, uriError) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uriError) }
+        )
 
         delay(500.milliseconds)
         assertEquals("Queue size should not increment on enqueue failure", initialCount, controller.mediaItemCount)
@@ -314,12 +323,21 @@ class PlayerServiceTest {
 
         val controller = awaitController()
 
-        controller.sendCustomCommand(PlayerService.COMMAND_LOAD_STREAM_URI, Bundle().apply { putString(PlayerService.KEY_URI, uri1) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_LOAD_STREAM_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uri1) }
+        )
         controller.awaitTimelineChange(1)
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_URI, Bundle().apply { putString(PlayerService.KEY_URI, uri2) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uri2) }
+        )
         controller.awaitTimelineChange(2)
 
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_NEXT_URI, Bundle().apply { putString(PlayerService.KEY_URI, uriNext) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_NEXT_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, uriNext) }
+        )
 
         val updated = controller.awaitTimelineChange(3)
         assertTrue("Queue size should be 3 after enqueue next", updated)
@@ -341,7 +359,10 @@ class PlayerServiceTest {
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
 
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_PLAYLIST_URI, Bundle().apply { putString(PlayerService.KEY_PLAYLIST_URI, playlistUri) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_PLAYLIST_URI,
+            Bundle().apply { putString(PlayerService.KEY_PLAYLIST_URI, playlistUri) }
+        )
 
         val updated = controller.awaitTimelineChange(initialCount + 2)
         assertTrue("Queue size should increment by playlist items count", updated)
@@ -354,7 +375,10 @@ class PlayerServiceTest {
         coEvery { musicRepository.loadMediaUri(testUri) } returns Result.success(item)
 
         val controller = awaitController()
-        controller.sendCustomCommand(PlayerService.COMMAND_LOAD_STREAM_URI, Bundle().apply { putString(PlayerService.KEY_URI, testUri) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_LOAD_STREAM_URI,
+            Bundle().apply { putString(PlayerService.KEY_URI, testUri) }
+        )
         controller.awaitTimelineChange(1)
 
         val seekArgs = Bundle().apply {
@@ -392,7 +416,10 @@ class PlayerServiceTest {
         )
 
         val controller = awaitController()
-        controller.sendCustomCommand(PlayerService.COMMAND_ENQUEUE_RADIO, Bundle().apply { putString(PlayerService.KEY_URI, radioUri) })
+        controller.sendCustomCommand(
+            PlayerService.COMMAND_ENQUEUE_RADIO,
+            Bundle().apply { putString(PlayerService.KEY_URI, radioUri) }
+        )
 
         val updated = controller.awaitTimelineChange(2)
         assertTrue("Queue size should increase by radio items count", updated)

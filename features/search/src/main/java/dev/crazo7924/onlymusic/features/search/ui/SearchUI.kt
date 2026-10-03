@@ -50,7 +50,6 @@ import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
 import dev.crazo7924.onlymusic.core.R as commonR
 
-@Suppress("LongMethod", "FunctionNaming")
 @Composable
 fun SearchUI(
     searchUiState: SearchUiState,
@@ -117,10 +116,10 @@ fun SearchUI(
                                     .clip(RoundedCornerShape(16.dp))
                                     .shimmerLoading()
                             )
-                        })
+                        }
+                    )
                 }
             }
-
 
             SearchState.SUCCESS -> SearchList(
                 modifier = Modifier.padding(innerPadding),
@@ -128,7 +127,8 @@ fun SearchUI(
                 onItemClicked = { onItemClicked(it) },
                 onEnqueue = { onEnqueue(it) },
                 onEnqueueNext = { onEnqueueNext(it) },
-                onEnqueueRadio = { onEnqueueRadio(it) })
+                onEnqueueRadio = { onEnqueueRadio(it) }
+            )
 
             SearchState.ERROR -> Box(
                 contentAlignment = Alignment.Center,
@@ -137,7 +137,8 @@ fun SearchUI(
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.something_went_wrong), textAlign = TextAlign.Center
+                    text = stringResource(R.string.something_went_wrong),
+                    textAlign = TextAlign.Center
                 )
             }
 
@@ -146,13 +147,12 @@ fun SearchUI(
                 onItemClicked = { onItemClicked(it) },
                 onEnqueue = { onEnqueue(it) },
                 onEnqueueNext = { onEnqueueNext(it) },
-                onEnqueueRadio = { onEnqueueRadio(it) })
+                onEnqueueRadio = { onEnqueueRadio(it) }
+            )
         }
     }
 }
 
-
-@Suppress("FunctionNaming", "LongMethod")
 @Composable
 fun SearchList(
     modifier: Modifier = Modifier,
@@ -175,7 +175,8 @@ fun SearchList(
                             onClick = { onItemClicked(mediaItems[index]) },
                             onLongClick = {
                                 menuVisible = true
-                            }),
+                            }
+                        ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val intrinsicSize = with(LocalDensity.current) {
@@ -219,13 +220,25 @@ fun SearchList(
             ) {
                 DropdownMenuItem(
                     text = { Text(stringResource(commonR.string.enqueue)) },
-                    onClick = { onEnqueue(mediaItems[index]); menuVisible = false })
+                    onClick = {
+                        onEnqueue(mediaItems[index])
+                        menuVisible = false
+                    }
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(commonR.string.enqueue_next)) },
-                    onClick = { onEnqueueNext(mediaItems[index]); menuVisible = false })
+                    onClick = {
+                        onEnqueueNext(mediaItems[index])
+                        menuVisible = false
+                    }
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(commonR.string.enqueue_radio)) },
-                    onClick = { onEnqueueRadio(mediaItems[index]); menuVisible = false })
+                    onClick = {
+                        onEnqueueRadio(mediaItems[index])
+                        menuVisible = false
+                    }
+                )
             }
 
             HorizontalDivider()
@@ -233,7 +246,6 @@ fun SearchList(
     }
 }
 
-@Suppress("FunctionNaming")
 @Preview(showBackground = true)
 @Composable
 private fun SearchPreview() {

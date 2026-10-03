@@ -41,7 +41,7 @@ private class ForwardingPainter(
     private var info = newInfo()
 
     override val intrinsicSize: Size
-        get() = if (size != null) size!! else painter.intrinsicSize
+        get() = size ?: painter.intrinsicSize
 
     override fun applyAlpha(alpha: Float): Boolean {
         if (alpha != DefaultAlpha) {
