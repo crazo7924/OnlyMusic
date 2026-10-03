@@ -4,6 +4,7 @@
  */
 
 import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.report.ReportMergeTask
 
 /*
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -27,21 +28,32 @@ tasks.register<Delete>("clean") {
     description = "Delete the build directory"
     delete(rootProject.layout.buildDirectory)
 }
-// Mockk uses ByteBuddy and the latter uses DynamicAgentLoading
+
+val mergeTask = tasks.register<ReportMergeTask>("mergeReports") {
+    description = "Merge the generated SARIF reports by Detekt"
+    output.set(rootProject.layout.buildDirectory.file("reports/detekt/merged.sarif"))
+}
+
 subprojects {
+    // Configure unit tests for JDK 21+ dynamic agent loading (MockK/ByteBuddy)
     tasks.withType<Test>().configureEach {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
     }
 
-    tasks.withType<Detekt>().configureEach {
-        reports {
-            sarif.required.set(true)
-            sarif.outputLocation.set(
-                rootProject.layout.buildDirectory
-                    .file(
-                        "reports/detekt/${project.path.replace(":", "_").removePrefix("_")}.sarif"
-                    )
-            )
+    // Safely configure subprojects that apply the Detekt plugin
+    pluginManager.withPlugin("dev.detekt") {
+        val detektTasks = tasks.withType<Detekt>()
+
+        detektTasks.configureEach {
+            config.setFrom(rootProject.file("detekt.yml"))
+            reports {
+                sarif.required.set(true)
+            }
+            finalizedBy(mergeTask)
+        }
+        // Wire SARIF reports into merge task lazily without eager task realization
+        mergeTask.configure {
+            input.from(detektTasks.map { it.reports.sarif.outputLocation })
         }
     }
 }
