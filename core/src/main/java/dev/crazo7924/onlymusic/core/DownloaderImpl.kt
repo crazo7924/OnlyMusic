@@ -114,4 +114,4 @@ private const val RECAPTCHA_COOKIES_KEY = "recaptcha_cookies"
 private const val YOUTUBE_RESTRICTED_MODE_COOKIE: String = "PREF=f2=8000000"
 private const val YOUTUBE_RESTRICTED_MODE_COOKIE_KEY: String = "youtube_restricted_mode_key"
 private const val USER_AGENT: String =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:157.0) Gecko/20100101 Firefox/157.0"
