@@ -417,8 +417,8 @@ private class PlayerCustomCommandHandler(
             result.onSuccess { item ->
                 withContext(Dispatchers.Main) {
                     exoPlayer.setMediaItem(item.toMediaItem())
+                    exoPlayer.playWhenReady = playWhenReady
                     exoPlayer.prepare()
-                    if (playWhenReady) exoPlayer.play()
                     Log.d(PlayerService.TAG, "Stream URI loaded. Play when ready: $playWhenReady")
                 }
             }.onFailure { error ->
@@ -445,8 +445,8 @@ private class PlayerCustomCommandHandler(
                 withContext(Dispatchers.Main) {
                     exoPlayer.clearMediaItems()
                     exoPlayer.setMediaItems(mediaItems)
+                    exoPlayer.playWhenReady = playWhenReady
                     exoPlayer.prepare()
-                    if (playWhenReady) exoPlayer.play()
                     Log.d(PlayerService.TAG, "Playlist URI loaded. Play when ready: $playWhenReady")
                 }
             } else {
