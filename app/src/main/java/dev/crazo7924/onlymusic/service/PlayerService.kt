@@ -19,6 +19,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSession.ConnectionResult.AcceptedResultBuilder
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionCommands
@@ -133,7 +134,7 @@ class PlayerService : MediaSessionService() {
         override fun onPositionDiscontinuity(
             oldPosition: Player.PositionInfo,
             newPosition: Player.PositionInfo,
-            reason: Int
+            reason: Int,
         ) {
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
             saveCurrentQueueState()
@@ -288,7 +289,7 @@ class PlayerService : MediaSessionService() {
                 .add(COMMAND_LOAD_MORE_QUEUE)
                 .build()
 
-            return MediaSession.ConnectionResult.AcceptedResultBuilder()
+            return AcceptedResultBuilder(session, controller)
                 .setAvailableSessionCommands(availableSessionCommands)
                 .build()
         }
