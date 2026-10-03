@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import org.schabi.newpipe.extractor.InfoItem
+import java.net.URI
 
 data class MediaListItem(
     val id: String,
@@ -43,4 +44,8 @@ fun MediaItem.toMediaListItem(): MediaListItem {
         mediaUri = this.localConfiguration?.uri?.toString(),
         duration = this.mediaMetadata.durationMs
     )
+}
+
+fun MediaListItem.ytMusicUri(): URI {
+    return URI.create("https://music.youtube.com/watch?v=${this.id}")
 }

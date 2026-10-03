@@ -7,6 +7,7 @@ package dev.crazo7924.onlymusic.data.repository
 
 import android.util.Log
 import dev.crazo7924.onlymusic.core.MediaListItem
+import dev.crazo7924.onlymusic.core.ytMusicUri
 import dev.crazo7924.onlymusic.data.db.Artist
 import dev.crazo7924.onlymusic.data.db.ArtistDao
 import dev.crazo7924.onlymusic.data.db.Playlist
@@ -46,9 +47,7 @@ class CachingMusicRepository @Inject constructor(
         val song = Song(
             songId = mediaListItem.id,
             title = mediaListItem.title ?: "",
-            uri = mediaListItem.mediaUri?.let {
-                URI.create("https://music.youtube.com/watch?v=${mediaListItem.id}")
-            } ?: URI(""),
+            uri = mediaListItem.ytMusicUri(),
             artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
             duration = mediaListItem.duration ?: 0L,
         )
@@ -96,7 +95,7 @@ class CachingMusicRepository @Inject constructor(
                 val song = Song(
                     songId = mediaListItem.id,
                     title = mediaListItem.title ?: "",
-                    uri = mediaListItem.mediaUri?.let { URI.create(it) } ?: URI(""),
+                    uri = mediaListItem.ytMusicUri(),
                     artworkUri = mediaListItem.thumbnailUri?.let { URI.create(it) },
                     duration = mediaListItem.duration ?: 0L,
                 )
