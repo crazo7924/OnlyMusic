@@ -10,9 +10,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import java.net.URI
 import java.util.UUID
 
+@Suppress("TooManyFunctions")
 @Dao
 interface PlaylistDao {
     @Transaction
@@ -36,11 +39,42 @@ interface PlaylistDao {
     @Query("Select playlistId from Playlist where name = 'queue' and playlistType = 'INTERNAL'")
     suspend fun getQueuePlaylistId(): UUID?
 
+    @Query("Select playlistId from Playlist where name = :name and playlistType = 'INTERNAL'")
+    suspend fun getInternalPlaylistId(name: String): UUID?
+
     @Query("Delete from PlaylistSongsCrossRef where playlistId = :playlistId")
     suspend fun clearPlaylistSongs(playlistId: UUID)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPlaylist(playlist: Playlist)
+
+    @Upsert
+    suspend fun upsertPlaylist(playlist: Playlist)
+
+    @Transaction
+    suspend fun upsertInternalPlaylist(name: String, uri: URI? = null): UUID {
+        var playlistId = getInternalPlaylistId(name)
+        if (playlistId == null) {
+            val newId = UUID.randomUUID()
+            insertPlaylist(
+                Playlist(
+                    playlistId = newId,
+                    name = name,
+                    uri = uri,
+                    playlistType = PlaylistType.INTERNAL,
+                )
+            )
+            playlistId = newId
+        }
+        return playlistId
+    }
+
+    @Transaction
+    suspend fun upsertInternalPlaylists() {
+        upsertInternalPlaylist("liked")
+        upsertInternalPlaylist("recent")
+        upsertInternalPlaylist("queue")
+    }
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSongToPlaylist(playlistSongsCrossRef: PlaylistSongsCrossRef)

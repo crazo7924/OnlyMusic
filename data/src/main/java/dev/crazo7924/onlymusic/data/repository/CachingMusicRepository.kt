@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.net.URI
-import java.util.UUID
 import javax.inject.Inject
 
 class CachingMusicRepository @Inject constructor(
@@ -40,19 +39,8 @@ class CachingMusicRepository @Inject constructor(
     SearchRepository by searchRepository {
 
     override suspend fun saveToRecents(mediaListItem: MediaListItem) = withContext(Dispatchers.IO) {
-        var recentPlaylistId = playlistDao.getRecentPlaylistId()
-
-        if (recentPlaylistId == null) {
-            val newPlaylistId = UUID.randomUUID()
-            playlistDao.insertPlaylist(
-                Playlist(
-                    playlistId = newPlaylistId,
-                    name = "recent",
-                    uri = null,
-                    playlistType = PlaylistType.INTERNAL,
-                )
-            )
-            recentPlaylistId = newPlaylistId
+        val recentPlaylistId = checkNotNull(playlistDao.getRecentPlaylistId()) {
+            "Recent playlist not initialized"
         }
 
         val song = Song(
@@ -90,27 +78,17 @@ class CachingMusicRepository @Inject constructor(
 
     override suspend fun saveQueue(items: List<MediaListItem>, activeIndex: Int, positionMs: Long) =
         withContext(Dispatchers.IO) {
-            var queuePlaylistId = playlistDao.getQueuePlaylistId()
-
-            if (queuePlaylistId == null) {
-                val newPlaylistId = UUID.randomUUID()
-                val playlist = Playlist(
-                    playlistId = newPlaylistId,
-                    name = "queue",
-                    uri = URI.create("queue://$activeIndex/$positionMs"),
-                    playlistType = PlaylistType.INTERNAL,
-                )
-                playlistDao.insertPlaylist(playlist)
-                queuePlaylistId = newPlaylistId
-            } else {
-                val playlist = Playlist(
-                    playlistId = queuePlaylistId,
-                    name = "queue",
-                    uri = URI.create("queue://$activeIndex/$positionMs"),
-                    playlistType = PlaylistType.INTERNAL,
-                )
-                playlistDao.insertPlaylist(playlist)
+            val queuePlaylistId = checkNotNull(playlistDao.getQueuePlaylistId()) {
+                "Queue playlist not initialized"
             }
+
+            val playlist = Playlist(
+                playlistId = queuePlaylistId,
+                name = "queue",
+                uri = URI.create("queue://$activeIndex/$positionMs"),
+                playlistType = PlaylistType.INTERNAL,
+            )
+            playlistDao.upsertPlaylist(playlist)
 
             playlistDao.clearPlaylistSongs(queuePlaylistId)
 

@@ -31,7 +31,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import java.net.URI
 import java.util.UUID
 
-@OptIn(ExperimentalCoroutinesApi::class)
+
 class CachingMusicRepositoryTest {
 
     private lateinit var repository: CachingMusicRepository
@@ -79,7 +79,7 @@ class CachingMusicRepositoryTest {
     }
 
     @Test
-    fun `saveToRecents saves item correctly and handles missing playlist`() = runTest {
+    fun `saveToRecents saves item correctly`() = runTest {
         val playlistId = UUID.randomUUID()
         val mediaItem = MediaListItem(
             id = "1",
@@ -91,12 +91,11 @@ class CachingMusicRepositoryTest {
             mediaUri = "http://media"
         )
 
-        // Mock missing playlist first, then successful retrieval
-        coEvery { playlistDao.getRecentPlaylistId() } returnsMany listOf(null, playlistId)
+        coEvery { playlistDao.getRecentPlaylistId() } returns playlistId
 
         repository.saveToRecents(mediaItem)
 
-        coVerify { playlistDao.insertPlaylist(any()) }
+        coVerify(exactly = 0) { playlistDao.insertPlaylist(any()) }
         coVerify { songDao.insertSong(any()) }
         coVerify { playlistDao.insertSongToPlaylist(any()) }
     }
@@ -149,6 +148,7 @@ class CachingMusicRepositoryTest {
 
         repository.saveQueue(items, 0, 1500L)
 
+        coVerify { playlistDao.upsertPlaylist(match { it.playlistId == playlistId }) }
         coVerify { playlistDao.clearPlaylistSongs(playlistId) }
         coVerify { songDao.insertSong(match { it.songId == "s1" }) }
         coVerify { playlistDao.insertSongToPlaylist(match { it.playlistId == playlistId && it.songId == "s1" }) }

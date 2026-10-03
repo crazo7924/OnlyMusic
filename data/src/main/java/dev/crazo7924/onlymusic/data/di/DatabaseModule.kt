@@ -7,6 +7,7 @@ package dev.crazo7924.onlymusic.data.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Module
@@ -19,6 +20,10 @@ import dev.crazo7924.onlymusic.data.db.OnlyMusicDatabase
 import dev.crazo7924.onlymusic.data.db.PlaylistDao
 import dev.crazo7924.onlymusic.data.db.SearchHistoryDao
 import dev.crazo7924.onlymusic.data.db.SongDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Module
@@ -28,7 +33,10 @@ object DatabaseModule {
     @Suppress("MaxLineLength")
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): OnlyMusicDatabase {
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+        playlistDaoProvider: Provider<PlaylistDao>,
+    ): OnlyMusicDatabase {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -50,9 +58,20 @@ object DatabaseModule {
 
         return Room.databaseBuilder(
             context,
-            OnlyMusicDatabase::class.java, "only-music-database"
+            OnlyMusicDatabase::class.java,
+            "only-music-database",
         )
             .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addCallback(
+                object : RoomDatabase.Callback() {
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        super.onOpen(db)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            playlistDaoProvider.get().upsertInternalPlaylists()
+                        }
+                    }
+                }
+            )
             .fallbackToDestructiveMigration(dropAllTables = false)
             .build()
     }
