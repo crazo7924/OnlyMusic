@@ -37,25 +37,3 @@ internal fun Long.toTimeString(): String {
     return "$hh:$mm:$ss"
 }
 
-internal val CenteredSquareShape: Shape = object : Shape {
-    val TAG = "CenteredSquareShape"
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density,
-    ): Outline {
-
-        val minSide = minOf(size.width, size.height)
-        val maxSide = maxOf(size.width, size.height)
-        val rect = Rect(
-            (maxSide - minSide) / 2,
-            0F,
-            (maxSide - minSide) / 2 + minSide,
-            minSide
-        )
-
-        return Outline.Rectangle(rect)
-    }
-
-    override fun toString(): String = TAG
-}

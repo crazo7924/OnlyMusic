@@ -8,12 +8,10 @@ package dev.crazo7924.onlymusic.features.search.ui
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,19 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import dev.crazo7924.onlymusic.core.MediaListItem
-import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
+import dev.crazo7924.onlymusic.core.ui.components.MediaListItemRow
 import dev.crazo7924.onlymusic.features.search.R
 import dev.crazo7924.onlymusic.features.search.SearchState
 import dev.crazo7924.onlymusic.features.search.SearchUiState
@@ -167,7 +158,9 @@ fun SearchList(
             var menuVisible by remember { mutableStateOf(false) }
 
             Box {
-                Row(
+                MediaListItemRow(
+                    mediaListItem = mediaItems[index],
+                    imageSize = 64.dp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp)
@@ -176,42 +169,8 @@ fun SearchList(
                             onLongClick = {
                                 menuVisible = true
                             }
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val intrinsicSize = with(LocalDensity.current) {
-                        Size(48.dp.toPx(), 48.dp.toPx())
-                    }
-
-                    val icon = iconForInfoType(mediaItems[index].infoType, intrinsicSize)
-
-                    AsyncImage(
-                        modifier = Modifier.size(64.dp),
-                        model = ImageRequest.Builder(
-                            LocalContext.current
-                        ).crossfade(true).data(mediaItems[index].thumbnailUri).build(),
-                        contentDescription = null,
-                        error = icon,
-                        placeholder = icon,
-                        fallback = icon,
-                        clipToBounds = true
-                    )
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        Text(
-                            text = mediaItems[index].title ?: stringResource(commonR.string.song_unknown_title),
-                            maxLines = 1,
-                            style = MaterialTheme.typography.titleMedium,
-                            overflow = TextOverflow.Ellipsis,
                         )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = mediaItems[index].artist ?: stringResource(commonR.string.song_unknown_artist),
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+                )
             }
 
             DropdownMenu(

@@ -28,9 +28,7 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,8 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import dev.crazo7924.onlymusic.MediaControllerManager
+import dev.crazo7924.onlymusic.core.ui.components.MediaListItemRow
 import dev.crazo7924.onlymusic.R
 import dev.crazo7924.onlymusic.core.toMediaListItem
 import dev.crazo7924.onlymusic.features.player.PlaybackState
@@ -170,37 +168,22 @@ private fun MiniPlayerBar(
     val media = playerUiState.media
     val isPlaying = playerUiState.playbackState == PlaybackState.PLAYING
 
-    ListItem(
+    val title = if (media == null) {
+        stringResource(R.string.nothing_is_playing)
+    } else {
+        media.mediaMetadata.title?.toString()
+    }
+    val artist = media?.mediaMetadata?.artist?.toString() ?: ""
+
+    MediaListItemRow(
+        title = title,
+        artist = artist,
+        thumbnailUri = media?.mediaMetadata?.artworkUri,
+        infoType = InfoItem.InfoType.STREAM,
+        imageSize = 48.dp,
         modifier = Modifier
             .clickable(onClick = onExpand)
             .animateContentSize(),
-        headlineContent = {
-            if (media == null) {
-                Text(stringResource(R.string.nothing_is_playing))
-            } else {
-                Text(
-                    text = media.mediaMetadata.title?.toString()
-                        ?: stringResource(commonR.string.song_unknown_title)
-                )
-            }
-        },
-        supportingContent = {
-            if (media != null) {
-                Text(
-                    text = media.mediaMetadata.artist?.toString()
-                        ?: stringResource(commonR.string.song_unknown_artist)
-                )
-            }
-        },
-        leadingContent = {
-            if (media != null) {
-                AsyncImage(
-                    modifier = Modifier.size(48.dp),
-                    model = media.mediaMetadata.artworkUri,
-                    contentDescription = null
-                )
-            }
-        },
         trailingContent = {
             if (media != null) {
                 MiniPlayerTrailingActions(
