@@ -7,12 +7,9 @@ package dev.crazo7924.onlymusic.features.player.ui
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,26 +21,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import dev.crazo7924.onlymusic.core.MediaListItem
-import dev.crazo7924.onlymusic.core.R
-import dev.crazo7924.onlymusic.core.ui.components.iconForInfoType
+import dev.crazo7924.onlymusic.core.ui.components.MediaListItemRow
 import org.schabi.newpipe.extractor.InfoItem
 
 @Suppress("FunctionNaming")
@@ -100,7 +85,9 @@ fun QueueList(
             val isPlaying = index == currentIndex
             val isPlayed = index < currentIndex
 
-            Row(
+            MediaListItemRow(
+                mediaListItem = mediaItems[index],
+                imageSize = if (isPlaying) 80.dp else 64.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 64.dp)
@@ -115,45 +102,8 @@ fun QueueList(
                         } else {
                             Modifier
                         }
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val intrinsicSize = with(LocalDensity.current) {
-                    Size(48.dp.toPx(), 48.dp.toPx())
-                }
-
-                val icon = iconForInfoType(mediaItems[index].infoType, intrinsicSize)
-
-                AsyncImage(
-                    modifier = Modifier
-                        .size(if (isPlaying) 80.dp else 64.dp)
-                        .clip(CenteredSquareShape),
-                    model = ImageRequest.Builder(
-                        LocalContext.current
-                    ).crossfade(true).data(mediaItems[index].thumbnailUri).build(),
-                    contentDescription = null,
-                    error = icon,
-                    placeholder = icon,
-                    fallback = icon,
-                    contentScale = ContentScale.Crop,
-                    clipToBounds = true
-                )
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = mediaItems[index].title ?: stringResource(R.string.song_unknown_title),
-                        maxLines = 1,
-                        style = MaterialTheme.typography.titleMedium,
-                        overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp),
-                        text = mediaItems[index].artist ?: stringResource(R.string.song_unknown_artist),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            )
         }
     }
 }

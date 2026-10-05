@@ -12,8 +12,13 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import org.schabi.newpipe.extractor.InfoItem
@@ -38,4 +43,27 @@ fun iconForInfoType(infoType: InfoItem.InfoType, intrinsicSize: Size? = null): P
         colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
         intrinsicSize = intrinsicSize,
     )
+}
+
+val CenteredSquareShape: Shape = object : Shape {
+    val TAG = "CenteredSquareShape"
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+
+        val minSide = minOf(size.width, size.height)
+        val maxSide = maxOf(size.width, size.height)
+        val rect = Rect(
+            (maxSide - minSide) / 2,
+            0F,
+            (maxSide - minSide) / 2 + minSide,
+            minSide
+        )
+
+        return Outline.Rectangle(rect)
+    }
+
+    override fun toString(): String = TAG
 }
