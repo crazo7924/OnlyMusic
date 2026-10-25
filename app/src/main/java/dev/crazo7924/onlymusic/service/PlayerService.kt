@@ -119,7 +119,7 @@ class PlayerService : MediaSessionService() {
                 if (recentJob == null && currentMedia != null && currentMedia != currentMediaItemForRecent) {
                     startRecentTimer(currentMedia)
                 }
-            } else {
+            } else if (!exoPlayer.playWhenReady) {
                 recentJob?.cancel()
                 recentJob = null
                 saveCurrentQueueState()
@@ -182,7 +182,7 @@ class PlayerService : MediaSessionService() {
         recentJob?.cancel()
         recentJob = null
         currentMediaItemForRecent = null
-        if (mediaItem != null && exoPlayer.isPlaying) {
+        if (mediaItem != null && (exoPlayer.isPlaying || exoPlayer.playWhenReady)) {
             startRecentTimer(mediaItem)
         }
     }
@@ -309,7 +309,7 @@ class PlayerService : MediaSessionService() {
             val resultCode = if (handled) {
                 SessionResult.RESULT_SUCCESS
             } else {
-                SessionError.ERROR_UNKNOWN
+                SessionError.ERROR_BAD_VALUE
             }
             return Futures.immediateFuture(SessionResult(resultCode))
         }
@@ -506,7 +506,11 @@ private class PlayerCustomCommandHandler(
     }
 
     fun processSeekToPercentage(percentage: Float): Boolean {
-        val duration = exoPlayer.duration
+        val duration = if (exoPlayer.duration != C.TIME_UNSET) {
+            exoPlayer.duration
+        } else {
+            exoPlayer.currentMediaItem?.mediaMetadata?.durationMs ?: C.TIME_UNSET
+        }
         if (percentage !in 0f..1f || duration == C.TIME_UNSET) {
             Log.d(
                 PlayerService.TAG,

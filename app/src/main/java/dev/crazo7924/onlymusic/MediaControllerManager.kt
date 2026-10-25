@@ -35,14 +35,14 @@ class MediaControllerManager(
 
     private var mediaControllerFuture: ListenableFuture<MediaController>? = null
 
-
     fun initialize() {
         if (mediaControllerFuture != null) {
             return
         }
 
         val sessionToken = SessionToken(
-            context, ComponentName(context, PlayerService::class.java)
+            context,
+            ComponentName(context, PlayerService::class.java)
         )
 
         mediaControllerFuture = mediaControllerBuilderFactory(context, sessionToken).buildAsync()

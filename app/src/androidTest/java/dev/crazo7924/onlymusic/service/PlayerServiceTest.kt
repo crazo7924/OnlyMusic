@@ -10,9 +10,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Looper
 import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
@@ -22,13 +19,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.crazo7924.onlymusic.MediaControllerManager
+import dev.crazo7924.onlymusic.TestRepositoryModule
 import dev.crazo7924.onlymusic.core.MediaListItem
-import dev.crazo7924.onlymusic.data.repository.MusicRepository
 import dev.crazo7924.onlymusic.features.player.PlayerViewModel
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
@@ -42,9 +37,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.schabi.newpipe.extractor.InfoItem
-import java.util.concurrent.CountDownLatch
+import java.util.UUID
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltAndroidTest
@@ -57,14 +51,15 @@ class PlayerServiceTest {
     private lateinit var context: Context
     private lateinit var controllerManager: MediaControllerManager
     private val mockPlayerViewModel: PlayerViewModel = mockk(relaxed = true)
+    private val fakeMusicRepository = TestRepositoryModule.fakeMusicRepository
 
-    @Inject
-    lateinit var musicRepository: MusicRepository
+    private fun runMainTest(block: suspend CoroutineScope.() -> Unit) =
+        runBlocking(Dispatchers.Main.immediate, block)
 
     @Before
     fun setup() {
         hiltRule.inject()
-        clearMocks(musicRepository, answers = true, recordedCalls = true, childMocks = true)
+        fakeMusicRepository.resetDefaults()
         context = ApplicationProvider.getApplicationContext()
 
         // Mock LifecycleScope for the manager
@@ -99,12 +94,11 @@ class PlayerServiceTest {
     }
 
     private fun createMediaListItem(
-        id: String = "test_id",
         title: String = "Test Title",
         artist: String = "Test Artist",
         mediaUri: String = "https://example.com/test.mp3",
     ) = MediaListItem(
-        id = id,
+        id = UUID.randomUUID().toString(),
         title = title,
         artist = artist,
         infoType = InfoItem.InfoType.STREAM,
@@ -113,57 +107,43 @@ class PlayerServiceTest {
         duration = 180000L,
     )
 
-    private fun MediaController.awaitTimelineChange(
+    private suspend fun MediaController.awaitTimelineChange(
         expectedCount: Int,
         timeoutSeconds: Long = 5,
     ): Boolean {
-        if (this.mediaItemCount == expectedCount) return true
-        val latch = CountDownLatch(1)
-        val listener = object : Player.Listener {
-            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                if (mediaItemCount == expectedCount) {
-                    latch.countDown()
-                }
-            }
+        val deadline = System.currentTimeMillis() + timeoutSeconds * 1000
+        while (System.currentTimeMillis() < deadline) {
+            if (this.mediaItemCount == expectedCount) return true
+            delay(50.milliseconds)
         }
-        addListener(listener)
-        val result = if (mediaItemCount == expectedCount) {
-            true
-        } else {
-            latch.await(timeoutSeconds, TimeUnit.SECONDS)
-        }
-        removeListener(listener)
-        return result
+        return this.mediaItemCount == expectedCount
     }
 
-    private fun MediaController.awaitMediaItemTransition(
-        expectedMediaId: String,
+    private suspend fun MediaController.awaitMediaItemTransition(
+        expectedMediaUri: String,
         timeoutSeconds: Long = 5,
     ): Boolean {
-        if (currentMediaItem?.mediaId == expectedMediaId) return true
-        val latch = CountDownLatch(1)
-        val listener = object : Player.Listener {
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (mediaItem?.mediaId == expectedMediaId) {
-                    latch.countDown()
-                }
-            }
+        val deadline = System.currentTimeMillis() + timeoutSeconds * 1000
+        while (System.currentTimeMillis() < deadline) {
+            val currentUri = currentMediaItem?.localConfiguration?.uri?.toString()
+                ?: currentMediaItem?.requestMetadata?.mediaUri?.toString()
+                ?: currentMediaItem?.mediaId
+            if (currentUri == expectedMediaUri) return true
+            delay(50.milliseconds)
         }
-        addListener(listener)
-        val result = if (currentMediaItem?.mediaId == expectedMediaId) {
-            true
-        } else {
-            latch.await(timeoutSeconds, TimeUnit.SECONDS)
-        }
-        removeListener(listener)
-        return result
+        val finalUri = currentMediaItem?.localConfiguration?.uri?.toString()
+            ?: currentMediaItem?.requestMetadata?.mediaUri?.toString()
+            ?: currentMediaItem?.mediaId
+        return finalUri == expectedMediaUri
     }
 
     @Test
-    fun testLoadStreamUri_Success() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadStreamUri_Success() = runMainTest {
         val testUri = "https://example.com/stream1.mp3"
-        val item = createMediaListItem(id = testUri, mediaUri = testUri)
-        coEvery { musicRepository.loadMediaUri(testUri) } returns Result.success(item)
+        val item = createMediaListItem(mediaUri = testUri)
+        fakeMusicRepository.loadMediaUriLambda = { uri ->
+            if (uri == testUri) Result.success(item) else Result.failure(Exception("Not found"))
+        }
 
         val controller = awaitController()
         val args = Bundle().apply {
@@ -175,13 +155,13 @@ class PlayerServiceTest {
 
         val transitioned = controller.awaitMediaItemTransition(testUri)
         assertTrue("Player should have transitioned to test URI", transitioned)
-        assertEquals(testUri, controller.currentMediaItem?.mediaId)
+        assertEquals(item.id, controller.currentMediaItem?.mediaId)
     }
 
     @Test
-    fun testLoadStreamUri_Failure_DoesNotUpdatePlayer() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadStreamUri_Failure_DoesNotUpdatePlayer() = runMainTest {
         val testUri = "https://example.com/error.mp3"
-        coEvery { musicRepository.loadMediaUri(testUri) } returns Result.failure(RuntimeException("Network error"))
+        fakeMusicRepository.loadMediaUriLambda = { Result.failure(RuntimeException("Network error")) }
 
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
@@ -196,7 +176,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testLoadStreamUri_MissingUriArg_HandledGracefully() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadStreamUri_MissingUriArg_HandledGracefully() = runMainTest {
         val controller = awaitController()
         val resultFuture = controller.sendCustomCommand(PlayerService.COMMAND_LOAD_STREAM_URI, Bundle.EMPTY)
 
@@ -205,15 +185,14 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testLoadPlaylistUri_Success() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadPlaylistUri_Success() = runMainTest {
         val playlistUri = "https://example.com/playlist1"
-        val item1 = createMediaListItem(id = "item1", mediaUri = "https://example.com/1.mp3")
-        val item2 = createMediaListItem(id = "item2", mediaUri = "https://example.com/2.mp3")
+        val item1 = createMediaListItem(mediaUri = "https://example.com/1.mp3")
+        val item2 = createMediaListItem(mediaUri = "https://example.com/2.mp3")
 
-        coEvery { musicRepository.loadPlaylistUri(playlistUri) } returns flowOf(
-            Result.success(item1),
-            Result.success(item2),
-        )
+        fakeMusicRepository.loadPlaylistUriLambda = {
+            flowOf(Result.success(item1), Result.success(item2))
+        }
 
         val controller = awaitController()
         val args = Bundle().apply {
@@ -229,16 +208,18 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testLoadPlaylistUri_PartialFailure_OnlyLoadsSuccessfulItems() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadPlaylistUri_PartialFailure_OnlyLoadsSuccessfulItems() = runMainTest {
         val playlistUri = "https://example.com/playlist_partial"
-        val item1 = createMediaListItem(id = "p1", mediaUri = "https://example.com/p1.mp3")
-        val item2 = createMediaListItem(id = "p2", mediaUri = "https://example.com/p2.mp3")
+        val item1 = createMediaListItem(mediaUri = "https://example.com/p1.mp3")
+        val item2 = createMediaListItem(mediaUri = "https://example.com/p2.mp3")
 
-        coEvery { musicRepository.loadPlaylistUri(playlistUri) } returns flowOf(
-            Result.success(item1),
-            Result.failure(RuntimeException("Item failed")),
-            Result.success(item2),
-        )
+        fakeMusicRepository.loadPlaylistUriLambda = {
+            flowOf(
+                Result.success(item1),
+                Result.failure(RuntimeException("Item failed")),
+                Result.success(item2),
+            )
+        }
 
         val controller = awaitController()
         val args = Bundle().apply {
@@ -253,7 +234,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testLoadPlaylistUri_MissingPlaylistUriArg_HandledGracefully() = runBlocking(Dispatchers.Main.immediate) {
+    fun testLoadPlaylistUri_MissingPlaylistUriArg_HandledGracefully() = runMainTest {
         val controller = awaitController()
         val resultFuture = controller.sendCustomCommand(PlayerService.COMMAND_LOAD_PLAYLIST_URI, Bundle.EMPTY)
 
@@ -262,15 +243,20 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testEnqueueUri_Success() = runBlocking(Dispatchers.Main.immediate) {
+    fun testEnqueueUri_Success() = runMainTest {
         val uri1 = "https://example.com/e1.mp3"
         val uri2 = "https://example.com/e2.mp3"
 
-        val item1 = createMediaListItem(id = uri1, mediaUri = uri1)
-        val item2 = createMediaListItem(id = uri2, mediaUri = uri2)
+        val item1 = createMediaListItem(mediaUri = uri1)
+        val item2 = createMediaListItem(mediaUri = uri2)
 
-        coEvery { musicRepository.loadMediaUri(uri1) } returns Result.success(item1)
-        coEvery { musicRepository.loadMediaUri(uri2) } returns Result.success(item2)
+        fakeMusicRepository.loadMediaUriLambda = { uri ->
+            when (uri) {
+                uri1 -> Result.success(item1)
+                uri2 -> Result.success(item2)
+                else -> Result.failure(Exception("Unknown uri"))
+            }
+        }
 
         val controller = awaitController()
 
@@ -291,9 +277,9 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testEnqueueUri_Failure_DoesNotIncrementQueue() = runBlocking(Dispatchers.Main.immediate) {
+    fun testEnqueueUri_Failure_DoesNotIncrementQueue() = runMainTest {
         val uriError = "https://example.com/error_enqueue.mp3"
-        coEvery { musicRepository.loadMediaUri(uriError) } returns Result.failure(RuntimeException("Enqueue failed"))
+        fakeMusicRepository.loadMediaUriLambda = { Result.failure(RuntimeException("Enqueue failed")) }
 
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
@@ -308,18 +294,23 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testEnqueueNext_InsertsAfterCurrentItem() = runBlocking(Dispatchers.Main.immediate) {
+    fun testEnqueueNext_InsertsAfterCurrentItem() = runMainTest {
         val uri1 = "https://example.com/item1.mp3"
         val uri2 = "https://example.com/item2.mp3"
         val uriNext = "https://example.com/itemNext.mp3"
 
-        val item1 = createMediaListItem(id = uri1, mediaUri = uri1)
-        val item2 = createMediaListItem(id = uri2, mediaUri = uri2)
-        val itemNext = createMediaListItem(id = uriNext, mediaUri = uriNext)
+        val item1 = createMediaListItem(mediaUri = uri1)
+        val item2 = createMediaListItem(mediaUri = uri2)
+        val itemNext = createMediaListItem(mediaUri = uriNext)
 
-        coEvery { musicRepository.loadMediaUri(uri1) } returns Result.success(item1)
-        coEvery { musicRepository.loadMediaUri(uri2) } returns Result.success(item2)
-        coEvery { musicRepository.loadMediaUri(uriNext) } returns Result.success(itemNext)
+        fakeMusicRepository.loadMediaUriLambda = { uri ->
+            when (uri) {
+                uri1 -> Result.success(item1)
+                uri2 -> Result.success(item2)
+                uriNext -> Result.success(itemNext)
+                else -> Result.failure(Exception("Unknown uri"))
+            }
+        }
 
         val controller = awaitController()
 
@@ -342,19 +333,18 @@ class PlayerServiceTest {
         val updated = controller.awaitTimelineChange(3)
         assertTrue("Queue size should be 3 after enqueue next", updated)
         assertEquals(3, controller.mediaItemCount)
-        assertEquals(uriNext, controller.getMediaItemAt(1).mediaId)
+        assertEquals(itemNext.id, controller.getMediaItemAt(1).mediaId)
     }
 
     @Test
-    fun testEnqueuePlaylistUri_Success() = runBlocking(Dispatchers.Main.immediate) {
+    fun testEnqueuePlaylistUri_Success() = runMainTest {
         val playlistUri = "https://example.com/enqueue_playlist"
-        val item1 = createMediaListItem(id = "ep1", mediaUri = "https://example.com/ep1.mp3")
-        val item2 = createMediaListItem(id = "ep2", mediaUri = "https://example.com/ep2.mp3")
+        val item1 = createMediaListItem(mediaUri = "https://example.com/ep1.mp3")
+        val item2 = createMediaListItem(mediaUri = "https://example.com/ep2.mp3")
 
-        coEvery { musicRepository.loadPlaylistUri(playlistUri) } returns flowOf(
-            Result.success(item1),
-            Result.success(item2),
-        )
+        fakeMusicRepository.loadPlaylistUriLambda = {
+            flowOf(Result.success(item1), Result.success(item2))
+        }
 
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
@@ -369,10 +359,10 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testSeekToPercentage_ValidPercentage() = runBlocking(Dispatchers.Main.immediate) {
+    fun testSeekToPercentage_ValidPercentage() = runMainTest {
         val testUri = "https://example.com/seek_test.mp3"
-        val item = createMediaListItem(id = testUri, mediaUri = testUri)
-        coEvery { musicRepository.loadMediaUri(testUri) } returns Result.success(item)
+        val item = createMediaListItem(mediaUri = testUri)
+        fakeMusicRepository.loadMediaUriLambda = { Result.success(item) }
 
         val controller = awaitController()
         controller.sendCustomCommand(
@@ -392,7 +382,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testSeekToPercentage_InvalidPercentage_Ignored() = runBlocking(Dispatchers.Main.immediate) {
+    fun testSeekToPercentage_InvalidPercentage_Handled() = runMainTest {
         val controller = awaitController()
         val seekArgsInvalid = Bundle().apply {
             putFloat(PlayerService.KEY_PERCENTAGE, 1.5f)
@@ -401,34 +391,34 @@ class PlayerServiceTest {
         val resultFuture = controller.sendCustomCommand(PlayerService.COMMAND_SEEK_TO_PERCENTAGE, seekArgsInvalid)
         val result = resultFuture.get(5, TimeUnit.SECONDS)
         assertNotNull(result)
-        assertEquals(SessionResult.RESULT_SUCCESS, result.resultCode)
+        assertEquals(SessionResult.RESULT_ERROR_BAD_VALUE, result.resultCode)
     }
 
     @Test
-    fun testEnqueueRadio_Success() = runBlocking(Dispatchers.Main.immediate) {
+    fun testEnqueueRadio_Success() = runMainTest {
         val radioUri = "https://example.com/radio1"
-        val item1 = createMediaListItem(id = "r1", mediaUri = "https://example.com/r1.mp3")
-        val item2 = createMediaListItem(id = "r2", mediaUri = "https://example.com/r2.mp3")
+        val item1 = createMediaListItem(mediaUri = "https://example.com/r1.mp3")
+        val item2 = createMediaListItem(mediaUri = "https://example.com/r2.mp3")
 
-        coEvery { musicRepository.loadAutoPlaylistUri(radioUri) } returns flowOf(
-            Result.success(item1),
-            Result.success(item2),
-        )
+        fakeMusicRepository.loadAutoPlaylistUriLambda = {
+            flowOf(Result.success(item1), Result.success(item2))
+        }
 
         val controller = awaitController()
+        val initialCount = controller.mediaItemCount
         controller.sendCustomCommand(
             PlayerService.COMMAND_ENQUEUE_RADIO,
             Bundle().apply { putString(PlayerService.KEY_URI, radioUri) }
         )
 
-        val updated = controller.awaitTimelineChange(2)
+        val updated = controller.awaitTimelineChange(initialCount + 2)
         assertTrue("Queue size should increase by radio items count", updated)
     }
 
     @Test
-    fun testLoadMoreQueue_Success() = runBlocking(Dispatchers.Main.immediate) {
-        val item = createMediaListItem(id = "lm1", mediaUri = "https://example.com/lm1.mp3")
-        coEvery { musicRepository.loadMorePlaylistItems() } returns flowOf(Result.success(item))
+    fun testLoadMoreQueue_Success() = runMainTest {
+        val item = createMediaListItem(mediaUri = "https://example.com/lm1.mp3")
+        fakeMusicRepository.loadMorePlaylistItemsLambda = { flowOf(Result.success(item)) }
 
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
@@ -440,10 +430,12 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testOnStartCommand_InitialStreamUri() = runBlocking(Dispatchers.Main.immediate) {
+    fun testOnStartCommand_InitialStreamUri() = runMainTest {
         val initialUri = "https://example.com/initial_stream.mp3"
-        val item = createMediaListItem(id = "1", mediaUri = initialUri)
-        coEvery { musicRepository.loadMediaUri(initialUri) } returns Result.success(item)
+        val item = createMediaListItem(mediaUri = initialUri)
+        fakeMusicRepository.loadMediaUriLambda = { uri ->
+            if (uri == initialUri) Result.success(item) else Result.failure(Exception("Unknown uri"))
+        }
 
         val intent = Intent(context, PlayerService::class.java).apply {
             putExtra(PlayerService.EXTRA_INITIAL_STREAM_URI, initialUri)
@@ -453,16 +445,16 @@ class PlayerServiceTest {
         context.startService(intent)
 
         val controller = awaitController()
-        val transitioned = controller.awaitMediaItemTransition("1")
+        val transitioned = controller.awaitMediaItemTransition(initialUri)
         assertTrue("Service should load initial URI from intent", transitioned)
     }
 
     @Test
-    fun testOnStartCommand_InitialPlaylistUri() = runBlocking(Dispatchers.Main.immediate) {
+    fun testOnStartCommand_InitialPlaylistUri() = runMainTest {
         val initialPlaylistUri = "https://example.com/initial_playlist"
-        val item1 = createMediaListItem(id = "ip1", mediaUri = "https://example.com/ip1.mp3")
+        val item1 = createMediaListItem(mediaUri = "https://example.com/ip1.mp3")
 
-        coEvery { musicRepository.loadPlaylistUri(initialPlaylistUri) } returns flowOf(Result.success(item1))
+        fakeMusicRepository.loadPlaylistUriLambda = { flowOf(Result.success(item1)) }
 
         val intent = Intent(context, PlayerService::class.java).apply {
             putExtra(PlayerService.EXTRA_INITIAL_PLAYLIST_URI, initialPlaylistUri)
@@ -477,7 +469,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testOnStartCommand_NullOrEmptyIntent_HandledGracefully() = runBlocking(Dispatchers.Main.immediate) {
+    fun testOnStartCommand_NullOrEmptyIntent_HandledGracefully() = runMainTest {
         val intent = Intent(context, PlayerService::class.java)
         context.startService(intent)
 
@@ -486,7 +478,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testUnknownCustomCommand_ReturnsPermissionDenied() = runBlocking(Dispatchers.Main.immediate) {
+    fun testUnknownCustomCommand_ReturnsPermissionDenied() = runMainTest {
         val controller = awaitController()
         val unknownCommand = SessionCommand("dev.crazo7924.onlymusic.player.UNKNOWN_COMMAND", Bundle.EMPTY)
 
@@ -497,11 +489,13 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun testSaveToRecents_TriggeredAfterPlaying() = runBlocking(Dispatchers.Main.immediate) {
+    fun testSaveToRecents_TriggeredAfterPlaying() = runMainTest {
         val testUri = "https://example.com/recents_test.mp3"
-        val item = createMediaListItem(id = testUri, mediaUri = testUri)
-        coEvery { musicRepository.loadMediaUri(testUri) } returns Result.success(item)
-        coEvery { musicRepository.saveToRecents(any()) } returns Unit
+        val item = createMediaListItem(mediaUri = testUri)
+        fakeMusicRepository.loadMediaUriLambda = { Result.success(item) }
+
+        var savedItem: MediaListItem? = null
+        fakeMusicRepository.saveToRecentsLambda = { savedItem = it }
 
         val controller = awaitController()
         val loadArgs = Bundle().apply {
@@ -515,6 +509,6 @@ class PlayerServiceTest {
         // PlayerService delays 3000ms before saving to recents
         delay(3500.milliseconds)
 
-        coVerify { musicRepository.saveToRecents(any()) }
+        assertNotNull(savedItem)
     }
 }
