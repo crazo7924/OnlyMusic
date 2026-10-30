@@ -4,7 +4,7 @@ mockk = "1.14.11"
 composeUiTest = "1.12.1"
 robolectric = "4.17"
 
-agp = "9.4.1"
+agp = "9.5.0"
 kotlin = "2.4.21"
 ksp = "2.3.12"
 detekt = "2.0.0-alpha.6"
