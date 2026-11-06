@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Singleton
 
+@Suppress("TooManyFunctions")
 class FakeMusicRepository : MusicRepository {
     var loadMediaUriLambda: suspend (String?) -> Result<MediaListItem> =
         { Result.failure(Exception("Not stubbed")) }
