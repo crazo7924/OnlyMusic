@@ -190,7 +190,7 @@ class PlayerServiceTest {
         val item1 = createMediaListItem(mediaUri = "https://example.com/1.mp3")
         val item2 = createMediaListItem(mediaUri = "https://example.com/2.mp3")
 
-        fakeMusicRepository.loadPlaylistUriLambda = {
+        fakeMusicRepository.mediaFlowLambda = {
             flowOf(Result.success(item1), Result.success(item2))
         }
 
@@ -213,7 +213,7 @@ class PlayerServiceTest {
         val item1 = createMediaListItem(mediaUri = "https://example.com/p1.mp3")
         val item2 = createMediaListItem(mediaUri = "https://example.com/p2.mp3")
 
-        fakeMusicRepository.loadPlaylistUriLambda = {
+        fakeMusicRepository.mediaFlowLambda = {
             flowOf(
                 Result.success(item1),
                 Result.failure(RuntimeException("Item failed")),
@@ -342,7 +342,7 @@ class PlayerServiceTest {
         val item1 = createMediaListItem(mediaUri = "https://example.com/ep1.mp3")
         val item2 = createMediaListItem(mediaUri = "https://example.com/ep2.mp3")
 
-        fakeMusicRepository.loadPlaylistUriLambda = {
+        fakeMusicRepository.mediaFlowLambda = {
             flowOf(Result.success(item1), Result.success(item2))
         }
 
@@ -400,7 +400,7 @@ class PlayerServiceTest {
         val item1 = createMediaListItem(mediaUri = "https://example.com/r1.mp3")
         val item2 = createMediaListItem(mediaUri = "https://example.com/r2.mp3")
 
-        fakeMusicRepository.loadAutoPlaylistUriLambda = {
+        fakeMusicRepository.mediaFlowLambda = {
             flowOf(Result.success(item1), Result.success(item2))
         }
 
@@ -418,7 +418,7 @@ class PlayerServiceTest {
     @Test
     fun testLoadMoreQueue_Success() = runMainTest {
         val item = createMediaListItem(mediaUri = "https://example.com/lm1.mp3")
-        fakeMusicRepository.loadMorePlaylistItemsLambda = { flowOf(Result.success(item)) }
+        fakeMusicRepository.mediaFlowLambda = { flowOf(Result.success(item)) }
 
         val controller = awaitController()
         val initialCount = controller.mediaItemCount
@@ -454,7 +454,7 @@ class PlayerServiceTest {
         val initialPlaylistUri = "https://example.com/initial_playlist"
         val item1 = createMediaListItem(mediaUri = "https://example.com/ip1.mp3")
 
-        fakeMusicRepository.loadPlaylistUriLambda = { flowOf(Result.success(item1)) }
+        fakeMusicRepository.mediaFlowLambda = { flowOf(Result.success(item1)) }
 
         val intent = Intent(context, PlayerService::class.java).apply {
             putExtra(PlayerService.EXTRA_INITIAL_PLAYLIST_URI, initialPlaylistUri)
