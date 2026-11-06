@@ -11,6 +11,16 @@ on:
       - build.gradle.kts
       - gradle/**
 
+  push:
+    branches: [ main ]
+    paths:
+      - app/**
+      - core/**
+      - data/**
+      - features/**
+      - build.gradle.kts
+      - gradle/**
+
   workflow_dispatch:
 
 concurrency:
