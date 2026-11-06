@@ -15,6 +15,16 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+val gitShortCommitId = runCatching {
+    ProcessBuilder("git", "-C", rootProject.projectDir.absolutePath, "rev-parse", "--short", "HEAD")
+        .redirectErrorStream(true)
+        .start()
+        .let { process ->
+            val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+            if (process.waitFor() == 0 && output.isNotBlank()) output else "unknown"
+        }
+}.getOrDefault("unknown")
+
 extensions.configure<ApplicationExtension>("android") {
     namespace = "dev.crazo7924.onlymusic"
     compileSdk = 37
@@ -29,8 +39,11 @@ extensions.configure<ApplicationExtension>("android") {
     }
 
     buildTypes {
-        debug {}
+        debug {
+            versionNameSuffix = "-debug-$gitShortCommitId"
+        }
         release {
+            versionNameSuffix = "-release-$gitShortCommitId"
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
