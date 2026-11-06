@@ -25,8 +25,7 @@ import javax.inject.Singleton
 class FakeMusicRepository : MusicRepository {
     var loadMediaUriLambda: suspend (String?) -> Result<MediaListItem> =
         { Result.failure(Exception("Not stubbed")) }
-    var loadPlaylistUriLambda: suspend (String?) -> Flow<Result<MediaListItem>> = { flowOf() }
-    var loadAutoPlaylistUriLambda: suspend (String?) -> Flow<Result<MediaListItem>> = { flowOf() }
+    var loadPlaylistLambda: suspend (String?) -> Flow<Result<MediaListItem>> = { flowOf() }
     var loadMorePlaylistItemsLambda: suspend () -> Flow<Result<MediaListItem>> = { flowOf() }
     var saveQueueLambda: suspend (List<MediaListItem>, Int, Long) -> Unit = { _, _, _ -> }
     var getSavedQueueLambda: suspend () -> SavedQueueState? = { null }
@@ -36,13 +35,11 @@ class FakeMusicRepository : MusicRepository {
     var getSearchSuggestionsLambda: suspend (String) -> Result<List<String>> =
         { Result.success(emptyList()) }
     var getRecentQueriesLambda: suspend () -> Flow<List<String>> = { flowOf(emptyList()) }
-    var addRecentQueryLambda: suspend (String) -> Unit = { }
-    var deleteRecentQueryLambda: suspend (String) -> Unit = { }
+    var recentQueryActionLambda: suspend (String) -> Unit = { }
 
     fun resetDefaults() {
         loadMediaUriLambda = { Result.failure(Exception("Not stubbed")) }
-        loadPlaylistUriLambda = { flowOf() }
-        loadAutoPlaylistUriLambda = { flowOf() }
+        loadPlaylistLambda = { flowOf() }
         loadMorePlaylistItemsLambda = { flowOf() }
         saveQueueLambda = { _, _, _ -> }
         getSavedQueueLambda = { null }
@@ -51,18 +48,17 @@ class FakeMusicRepository : MusicRepository {
         searchLambda = { flowOf() }
         getSearchSuggestionsLambda = { Result.success(emptyList()) }
         getRecentQueriesLambda = { flowOf(emptyList()) }
-        addRecentQueryLambda = { }
-        deleteRecentQueryLambda = { }
+        recentQueryActionLambda = { }
     }
 
     override suspend fun loadMediaUri(uri: String?): Result<MediaListItem> =
         loadMediaUriLambda(uri)
 
     override suspend fun loadPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
-        loadPlaylistUriLambda(uri)
+        loadPlaylistLambda(uri)
 
     override suspend fun loadAutoPlaylistUri(uri: String?): Flow<Result<MediaListItem>> =
-        loadAutoPlaylistUriLambda(uri)
+        loadPlaylistLambda(uri)
 
     override suspend fun loadMorePlaylistItems(): Flow<Result<MediaListItem>> =
         loadMorePlaylistItemsLambda()
@@ -84,9 +80,9 @@ class FakeMusicRepository : MusicRepository {
 
     override suspend fun getRecentQueries(): Flow<List<String>> = getRecentQueriesLambda()
 
-    override suspend fun addRecentQuery(query: String) = addRecentQueryLambda(query)
+    override suspend fun addRecentQuery(query: String) = recentQueryActionLambda(query)
 
-    override suspend fun deleteRecentQuery(query: String) = deleteRecentQueryLambda(query)
+    override suspend fun deleteRecentQuery(query: String) = recentQueryActionLambda(query)
 }
 
 @Module
