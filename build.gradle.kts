@@ -4,7 +4,6 @@
  */
 
 import dev.detekt.gradle.Detekt
-import dev.detekt.gradle.report.ReportMergeTask
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -22,31 +21,16 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
-val mergeTask = tasks.register<ReportMergeTask>("mergeReports") {
-    description = "Merge the generated SARIF reports by Detekt"
-    output.set(rootProject.layout.buildDirectory.file("reports/detekt/merged.sarif"))
-}
-
 subprojects {
     // Configure unit tests for JDK 21+ dynamic agent loading (MockK/ByteBuddy)
     tasks.withType<Test>().configureEach {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
     }
 
-    // Safely configure subprojects that apply the Detekt plugin
+    // Use the shared Detekt configuration for every subproject that applies Detekt.
     pluginManager.withPlugin("dev.detekt") {
-        val detektTasks = tasks.withType<Detekt>()
-
-        detektTasks.configureEach {
+        tasks.withType<Detekt>().configureEach {
             config.setFrom(rootProject.file("detekt.yml"))
-            reports {
-                sarif.required.set(true)
-            }
-            finalizedBy(mergeTask)
-        }
-        // Wire SARIF reports into merge task lazily without eager task realization
-        mergeTask.configure {
-            input.from(detektTasks.map { it.reports.sarif.outputLocation })
         }
     }
 }
