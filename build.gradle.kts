@@ -3,6 +3,8 @@
  * SPDX-FileCopyrightText: 2026 Bharat Dev Burman
  */
 
+import dev.detekt.gradle.Detekt
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
@@ -23,5 +25,12 @@ subprojects {
     // Configure unit tests for JDK 21+ dynamic agent loading (MockK/ByteBuddy)
     tasks.withType<Test>().configureEach {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+
+    // Use the shared Detekt configuration for every subproject that applies Detekt.
+    pluginManager.withPlugin("dev.detekt") {
+        tasks.withType<Detekt>().configureEach {
+            config.setFrom(rootProject.file("detekt.yml"))
+        }
     }
 }
