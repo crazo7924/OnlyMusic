@@ -137,37 +137,6 @@ Potential future improvements include:
 
 The roadmap is subject to change as development continues.
 
-## Contributing
-
-Contributions, suggestions, and bug reports are welcome.
-
-To contribute:
-
-1. Fork the repository.
-2. Create a feature branch:
-
-```bash
-git checkout -b feature/your-feature
-```
-
-3. Make and test your changes.
-4. Commit your work with a clear message:
-
-```bash
-git commit -m "Add your feature"
-```
-
-5. Push the branch and open a pull request.
-
-When reporting a bug, include:
-
-- Android version
-- Device or emulator model
-- Application version or commit
-- Steps to reproduce the issue
-- Relevant logs or screenshots
-- The expected and actual behavior
-
 ## Acknowledgements
 
 - [TeamNewPipe](https://github.com/TeamNewPipe) for the NewPipe Extractor library
