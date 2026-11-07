@@ -53,8 +53,3 @@ jobs:
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --continue
-
-      - name: Upload SARIF to GitHub
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: build/reports/detekt/merged.sarif
