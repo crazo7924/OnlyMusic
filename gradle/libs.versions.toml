@@ -1,6 +1,6 @@
 [versions]
 coreKtxVersion = "1.7.0"
-mockk = "1.14.11"
+mockk = "1.14.12"
 composeUiTest = "1.12.1"
 robolectric = "4.17"
 
