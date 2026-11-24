@@ -16,7 +16,7 @@ activityComposeKtx = "1.13.0"
 room = "2.8.5"
 
 # Compose
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 materialIconsExtended = "1.7.8"
 
 # Media
